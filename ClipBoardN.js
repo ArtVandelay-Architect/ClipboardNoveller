@@ -3,8 +3,10 @@
 // Initialise the program
 let fm = FileManager.local ();
 let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
-let lofPath = fm.joinPath (dirPath,"/lof.json");  
 // json file containing the list of file names
+// Loads into an array of objects with attributes `filename`, `pages` 
+// and optionally `hiddenPages[]`
+let lofPath = fm.joinPath (dirPath,"/lof.json");  
 
 // If the path does not exist, create one
 if (!fm.fileExists(dirPath)){
@@ -168,7 +170,7 @@ function SaveFiles (files) {
 
 // Used to sort file by name
 function FileCompare (a, b) { 
-	return a.filename < b.filename
+	return a.filename > b.filename
 }
 
 // Opening a file
@@ -197,22 +199,46 @@ function UpdatePageList (ThisFile){
 	HeadTitle.widthWeight = 40;
 	HeadTitle.centerAligned ()
 	
-	let NewBtn = toprow.addButton ("📃"); //A button with a page on it
+	let NewBtn = toprow.addButton ("📃"); // A button with a page on it
 	NewBtn.widthWeight = 20;
 	NewBtn.onTap = () => {
 		AddPage (ThisFile);
 	}
 	NewBtn.rightAligned ();
 	
+	let UnhideBtn = toprow.addButton ("😐"); // Indicates "unhide"
+	UnhideBtn.widthWeight = 20;
+	UnhideBtn.onTap = () => {
+		let a = new Alert ();
+		a.title = "Are You Sure?";
+		a.addCancelAction ("Proceed");
+		a.addTextField ("Enter UNHIDE to Continue").setEmailAddressKeyboard ();
+		presentation = a.presentAlert ()
+		presentation.then (
+			function () {
+				UnhidePages (ThisFile, a.textFieldValue (0));
+			},
+			function () {} 
+		); 	
+	}
+	UnhideBtn.rightAligned ();
+
 	PageList.addRow (toprow);	
 
-	for (i = 1; i <= ThisFile.pages; i++) {
+	for (let i = 1; i <= ThisFile.pages; i++) {
+		// Do not display hidden pages, if such feature was enabled
+		if (ThisFile.hasOwnProperty("hiddenPages")) {
+			if (ThisFile.hiddenPages.includes (i)) {
+				continue;
+			}
+		}
+
 		let row = new UITableRow ();
 		
 		row.dismissOnSelect = false; //don't close the table when a row is selected
 		
-		row.onSelect = (idx) => { //idx is the index of the row being selected
-			OpenPage (ThisFile,idx);
+		row.onSelect = (idx) => { // idx is the index of the row being selected
+			OpenPage (ThisFile, idx);
 		}
 
 		let preview = fm.readString (
@@ -221,26 +247,43 @@ function UpdatePageList (ThisFile){
 		
 		let InfoCell = row.addText ("Page: " + i.toString (), preview);
 		InfoCell.widthWeight = 80;
+
+		let HideBtn = row.addButton ("🫥"); // This means 'hide' I suppose 
+		HideBtn.widthWeight = 20;
+		HideBtn.rightAligned ();
+		HideBtn.onTap = () => {
+			let a = new Alert ();
+			a.title = "Are You Sure?";
+			a.addCancelAction ("Proceed");
+			a.addTextField ("Enter HIDE to Continue").setEmailAddressKeyboard ();
+			presentation = a.presentAlert ()
+			presentation.then (
+				function () {
+					HidePage (ThisFile, i, a.textFieldValue (0));
+				},
+				function () {} 
+			); 	
+		}
+
 		PageList.addRow (row);
 	}
 }
 
 async function AddPage(ThisFile){
-	let files = LoadFiles (); //Load LOF to update the page numbers
-	let i = ThisFile.pages + 1; //Page number for the new page
-	//let content = ContentPrompt();
+	let files = LoadFiles (); // Load LOF to update the page numbers
+	let i = ThisFile.pages + 1; // Page number for the new page
 	let content = Pasteboard.paste ();
 
 	let a = new Alert ();
 	a.title = "Confirm Adding?";
-	a.message = content; //Provide the clipboard as a sample
+	a.message = content; // Provide the clipboard as a sample
 	a.addCancelAction ("Cancel");
 	a.addAction ("Confirm");
 	
 	let result = await a.presentAlert ();
 	
 	if (result == 0) {
-		//Linear search to update the json file
+		// Linear search to update the json file
 		for (c = 0; c < files.length; c++){
 			file = files[c];
 			if (file.filename == ThisFile.filename) {
@@ -250,15 +293,73 @@ async function AddPage(ThisFile){
 		}
 		SaveFiles (files);
 		
-		//Get the file name dirPath/filenameI.txt
+		// Get the file name dirPath/filenameI.txt
 		let PagePath = GetPath (ThisFile, i);
 		fm.writeString (PagePath, content);
 		
-		ThisFile.pages ++; //Add 1 to the pages in ThisFile to update the menu
+		ThisFile.pages ++; // Add 1 to the pages in ThisFile to update the menu
 		
 		UpdatePageList (ThisFile);
 		PageList.reload ();
 	}
+}
+
+function UnhidePages (ThisFile, Key) {
+	if (Key != "UNHIDE") {
+		return;
+	} 
+
+	let files = LoadFiles ();
+
+	for (c = 0; c < files.length; c++) {
+		if (files[c].filename == ThisFile.filename) {
+			// Create this attribute if it did not exist for backwards compatibility
+			if (!files[c].hasOwnProperty ("hiddenPages")) {
+				files[c]["hiddenPages"] = [];
+			}
+			files[c]["hiddenPages"] = [];
+			break;
+		}
+	}
+	SaveFiles(files)
+	
+	// Update the loaded copy as well
+	if (!ThisFile.hasOwnProperty ("hiddenPages")) {
+		ThisFile["hiddenPages"] = [];
+	}
+	ThisFile["hiddenPages"] = [];
+
+	UpdatePageList (ThisFile);
+	PageList.reload ();
+}
+
+function HidePage (ThisFile, PageNum, Key) {
+	if (Key != "HIDE") {
+		return;
+	}
+	
+	let files = LoadFiles ();
+
+	for (c = 0; c < files.length; c++) {
+		if (files[c].filename == ThisFile.filename) {
+			// Create this attribute if it did not exist for backwards compatibility
+			if (!files[c].hasOwnProperty ("hiddenPages")) {
+				files[c]["hiddenPages"] = [];
+			}
+			files[c].hiddenPages.push (PageNum);
+			break;
+		}
+	}
+	SaveFiles(files)
+
+	// Update the loaded copy as well
+	if (!ThisFile.hasOwnProperty ("hiddenPages")) {
+		ThisFile["hiddenPages"] = [];
+	}
+	ThisFile.hiddenPages.push (PageNum);
+
+	UpdatePageList (ThisFile);
+	PageList.reload ();
 }
 
 
@@ -266,7 +367,7 @@ function GetPath (ThisFile, PageNum) {
 	return fm.joinPath (dirPath, "/" + ThisFile.filename + PageNum.toString () + ".txt");
 }	
 
-function OpenPage (ThisFile,index) {
+function OpenPage (ThisFile, index) {
 	let PagePath = GetPath (ThisFile, index);
 	let ql = QuickLook;
 	ql.present (PagePath, true);
