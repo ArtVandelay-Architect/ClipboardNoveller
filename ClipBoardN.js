@@ -303,8 +303,8 @@ function ToggleHidePage (ThisFile, PageNum) {
 			}
 
 			// Toggle
-			if (file[c].hiddenPages.includes (PageNum)) {
-				RemovePageNumFromArray (files[c].hiddenPages);
+			if (files[c].hiddenPages.includes (PageNum)) {
+				RemovePageNumFromArray (files[c].hiddenPages, PageNum);
 			} else {
 				files[c].hiddenPages.push (PageNum);
 			}
@@ -315,7 +315,7 @@ function ToggleHidePage (ThisFile, PageNum) {
 	SaveFiles(files);
 
 	// Update the loaded copy as well
-	ThisFile[hiddenPages] = files[c].hiddenPages;
+	ThisFile["hiddenPages"] = files[c].hiddenPages;
 
 	UpdatePageList (ThisFile);
 	PageList.reload ();
@@ -333,10 +333,12 @@ function OpenPage (ThisFile, index) {
 }
 
 function RemovePageNumFromArray (Arr, PageNum) {
-	let p = Arr.indexOf(PageNum);
-	if (p != -1) {
-		let end = Arr.pop ();
-		Arr[p] = end;
+	let end = Arr.pop();
+	if (Arr[Arr.length] != PageNum) { // PageNum not the end, insert it back
+		let p = Arr.indexOf(PageNum);
+		if (p != -1) {
+			Arr[p] = end;
+		}
 	}
 }
 	
