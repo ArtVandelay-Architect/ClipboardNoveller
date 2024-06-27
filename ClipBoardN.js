@@ -18,9 +18,11 @@ let table = new UITable();
 table.showSeparators = true;
 UpdateTable(); //Update the list when the program starts
 
-//Initialise a table to display all the pages in a file
+// Initialise a table to display all the pages in a file
 let PageList = new UITable;
 table.showSeparators = true;
+
+let showHiddenPages = false; // Do not show hidden pages by default
 
 // Password protection, disabled by default
 if (1 == 0) {
@@ -206,22 +208,14 @@ function UpdatePageList (ThisFile){
 	}
 	NewBtn.rightAligned ();
 	
-	let UnhideBtn = toprow.addButton ("😐"); // Indicates "unhide"
-	UnhideBtn.widthWeight = 20;
-	UnhideBtn.onTap = () => {
-		let a = new Alert ();
-		a.title = "Are You Sure?";
-		a.addCancelAction ("Proceed");
-		a.addTextField ("Enter UNHIDE to Continue").setEmailAddressKeyboard ();
-		presentation = a.presentAlert ()
-		presentation.then (
-			function () {
-				UnhidePages (ThisFile, a.textFieldValue (0));
-			},
-			function () {} 
-		); 	
+	let ShowHiddenBtn = toprow.addButton ("😐"); // Indicates "unhide"
+	ShowHiddenBtn.widthWeight = 20;
+	ShowHiddenBtn.onTap = () => {
+		showHiddenPages = true;
+		UpdatePageList (ThisFile);
+		PageList.reload ();
 	}
-	UnhideBtn.rightAligned ();
+	ShowHiddenBtn.rightAligned ();
 
 	PageList.addRow (toprow);	
 
@@ -229,7 +223,9 @@ function UpdatePageList (ThisFile){
 		// Do not display hidden pages, if such feature was enabled
 		if (ThisFile.hasOwnProperty("hiddenPages")) {
 			if (ThisFile.hiddenPages.includes (i)) {
-				continue;
+				if (!showHiddenPages) {
+					continue;
+				}
 			}
 		}
 
@@ -248,21 +244,12 @@ function UpdatePageList (ThisFile){
 		let InfoCell = row.addText ("Page: " + i.toString (), preview);
 		InfoCell.widthWeight = 80;
 
+		// Actually a toggle hide button
 		let HideBtn = row.addButton ("🫥"); // This means 'hide' I suppose 
 		HideBtn.widthWeight = 20;
 		HideBtn.rightAligned ();
 		HideBtn.onTap = () => {
-			let a = new Alert ();
-			a.title = "Are You Sure?";
-			a.addCancelAction ("Proceed");
-			a.addTextField ("Enter HIDE to Continue").setEmailAddressKeyboard ();
-			presentation = a.presentAlert ()
-			presentation.then (
-				function () {
-					HidePage (ThisFile, i, a.textFieldValue (0));
-				},
-				function () {} 
-			); 	
+			ToggleHidePage (ThisFile, i);
 		}
 
 		PageList.addRow (row);
@@ -304,39 +291,7 @@ async function AddPage(ThisFile){
 	}
 }
 
-function UnhidePages (ThisFile, Key) {
-	if (Key != "UNHIDE") {
-		return;
-	} 
-
-	let files = LoadFiles ();
-
-	for (c = 0; c < files.length; c++) {
-		if (files[c].filename == ThisFile.filename) {
-			// Create this attribute if it did not exist for backwards compatibility
-			if (!files[c].hasOwnProperty ("hiddenPages")) {
-				files[c]["hiddenPages"] = [];
-			}
-			files[c]["hiddenPages"] = [];
-			break;
-		}
-	}
-	SaveFiles(files)
-	
-	// Update the loaded copy as well
-	if (!ThisFile.hasOwnProperty ("hiddenPages")) {
-		ThisFile["hiddenPages"] = [];
-	}
-	ThisFile["hiddenPages"] = [];
-
-	UpdatePageList (ThisFile);
-	PageList.reload ();
-}
-
-function HidePage (ThisFile, PageNum, Key) {
-	if (Key != "HIDE") {
-		return;
-	}
+function ToggleHidePage (ThisFile, PageNum) {
 	
 	let files = LoadFiles ();
 
@@ -346,17 +301,21 @@ function HidePage (ThisFile, PageNum, Key) {
 			if (!files[c].hasOwnProperty ("hiddenPages")) {
 				files[c]["hiddenPages"] = [];
 			}
-			files[c].hiddenPages.push (PageNum);
+
+			// Toggle
+			if (file[c].hiddenPages.includes (PageNum)) {
+				RemovePageNumFromArray (files[c].hiddenPages);
+			} else {
+				files[c].hiddenPages.push (PageNum);
+			}
+
 			break;
 		}
 	}
-	SaveFiles(files)
+	SaveFiles(files);
 
 	// Update the loaded copy as well
-	if (!ThisFile.hasOwnProperty ("hiddenPages")) {
-		ThisFile["hiddenPages"] = [];
-	}
-	ThisFile.hiddenPages.push (PageNum);
+	ThisFile[hiddenPages] = files[c].hiddenPages;
 
 	UpdatePageList (ThisFile);
 	PageList.reload ();
@@ -371,5 +330,13 @@ function OpenPage (ThisFile, index) {
 	let PagePath = GetPath (ThisFile, index);
 	let ql = QuickLook;
 	ql.present (PagePath, true);
+}
+
+function RemovePageNumFromArray (Arr, PageNum) {
+	let p = Arr.indexOf(PageNum);
+	if (p != -1) {
+		let end = Arr.pop ();
+		Arr[p] = end;
+	}
 }
 	
