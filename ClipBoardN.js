@@ -383,8 +383,8 @@ function MovePageUp (ThisFile, PageNum) {
 	fm.move (p2, newP1);
 	fm.move (nonsense, newP2);
 
-	// Clean up
-	fm.remove (nonsense);
+	UpdatePageList (ThisFile);
+	PageList.reload ();
 }
 
 function GetPath (ThisFile, PageNum) {
