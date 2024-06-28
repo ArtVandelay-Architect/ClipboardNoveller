@@ -377,14 +377,14 @@ function MovePageUp (ThisFile, PageNum) {
 	}
 
 	// Cannot be bordered with random string generation
-	let nonsense = "oreetdoloremagnaaliquaUtenimadminimveniamquisnostcitationullamc";
+	let nonsense = "oreetdoloremagnaalisnostcitationullamc" + p1;
 	// Swap files
-	fm.copy (p1, nonsense + p1);
-	fm.copy (p2, newP1);
-	fm.copy (nonsense + p1, newP2);
+	fm.move (p1, nonsense);
+	fm.move (p2, newP1);
+	fm.move (nonsense, newP2);
 
 	// Clean up
-	fm.remove (nonsense + p1);
+	fm.remove (nonsense);
 	if (GetFileSuffix (p1) != GetFileSuffix (p2)) {
 		fm.remove (p1);
 		fm.remove (p2);
