@@ -211,7 +211,7 @@ function UpdatePageList (ThisFile){
 	let ShowHiddenBtn = toprow.addButton ("😐"); // Indicates "unhide"
 	ShowHiddenBtn.widthWeight = 20;
 	ShowHiddenBtn.onTap = () => {
-		showHiddenPages = true;
+		showHiddenPages = !showHiddenPages;
 		UpdatePageList (ThisFile);
 		PageList.reload ();
 	}
@@ -243,6 +243,13 @@ function UpdatePageList (ThisFile){
 		
 		let InfoCell = row.addText ("Page: " + i.toString (), preview);
 		InfoCell.widthWeight = 80;
+
+		let UpBtn = row.addButton ("🔼"); // Up button
+		UpBtn.widthWeight = 20;
+		UpBtn.rightAligned ();
+		UpBtn.onTap = () => {
+			MovePageUp (ThisFile, i);
+		}
 
 		// Actually a toggle hide button
 		let HideBtn = row.addButton ("🫥"); // This means 'hide' I suppose 
@@ -321,6 +328,23 @@ function ToggleHidePage (ThisFile, PageNum) {
 	PageList.reload ();
 }
 
+function MovePageUp (ThisFile, PageNum) {
+	if (PageNum <= 1) { // Do nothing for exceptions and the first page
+		return;
+	}
+	
+	let p1 = GetPath (ThisFile, PageNum - 1);
+	let p2 = GetPath (ThisFile, PageNum);
+
+	let s1 = fm.readString (p1);
+	let s2 = fm.readString (p2);
+
+	fm.writeString(p1, s2);
+	fm.writeString(p2, s1);
+
+	UpdatePageList (ThisFile);
+	PageList.reload ();
+}
 
 function GetPath (ThisFile, PageNum) {
 	return fm.joinPath (dirPath, "/" + ThisFile.filename + PageNum.toString () + ".txt");
