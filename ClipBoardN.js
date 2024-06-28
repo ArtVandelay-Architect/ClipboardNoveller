@@ -246,9 +246,9 @@ function UpdatePageList (ThisFile){
 
 		let filePath = GetPath (ThisFile, i);
 		let preview = "No Preview";
-		if (filePath.slice (-4) == ".txt") {
+		if (GetFileSuffix (filePath) == "txt") {
 			preview = fm.readString (filePath).slice (0,40).replace (/\s/g, ' ');
-		} else if (filePath.slice (-4) == ".png") {
+		} else if (GetFileSuffix (filePath) == "png") {
 			preview = "image";
 		}
 		
@@ -369,14 +369,26 @@ function MovePageUp (ThisFile, PageNum) {
 	let p1 = GetPath (ThisFile, PageNum - 1);
 	let p2 = GetPath (ThisFile, PageNum);
 
-	let s1 = fm.readString (p1);
-	let s2 = fm.readString (p2);
+	let newP1 = p1;
+	let newP2 = p2;
+	if (GetFileSuffix (p1) != GetFileSuffix (p2)) {
+		newP1 = SwapFileSuffix (p1, GetFileSuffix (p2));
+		newP2 = SwapFileSuffix (p2, GetFileSuffix (p1));
+	}
 
-	fm.writeString(p1, s2);
-	fm.writeString(p2, s1);
+	// Cannot be bordered with random string generation
+	let nonsense = "oreetdoloremagnaaliquaUtenimadminimveniamquisnostcitationullamc";
+	// Swap files
+	fm.copy (p1, nonsense + p1);
+	fm.copy (p2, newP1);
+	fm.copy (nonsense + p1, newP2);
 
-	UpdatePageList (ThisFile);
-	PageList.reload ();
+	// Clean up
+	fm.remove (nonsense + p1);
+	if (GetFileSuffix (p1) != GetFileSuffix (p2)) {
+		fm.remove (p1);
+		fm.remove (p2);
+	}
 }
 
 function GetPath (ThisFile, PageNum) {
@@ -405,4 +417,30 @@ function RemovePageNumFromArray (Arr, PageNum) {
 		}
 	}
 }
+
+function GetFileSuffix (filePath) {
+	// Split the file path by periods to separate the suffix
+	let parts = filePath.split ('.');
 	
+	// Check if there is a suffix present
+	if (parts.length > 1) {
+		// Return the last part as the suffix
+		return parts.pop ();
+	}
+	
+	// If no suffix is found, return an empty string or null
+	return '';
+}
+
+function SwapFileSuffix (filePath, newSuffix) {
+	// Find the last period in the file path
+	const lastDotIndex = filePath.lastIndexOf ('.');
+	
+	// If there is no period, return the file path with the new suffix appended
+	if (lastDotIndex === -1) {
+		return filePath + '.' + newSuffix;
+	}
+	
+	// Return the file path with the suffix replaced
+	return filePath.substring (0, lastDotIndex + 1) + newSuffix;
+}
