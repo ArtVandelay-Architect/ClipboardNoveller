@@ -244,9 +244,13 @@ function UpdatePageList (ThisFile){
 			OpenPage (ThisFile, i);
 		}
 
-		let preview = fm.readString (
-			GetPath (ThisFile, i)
-		).slice (0,40).replace (/\s/g, ' ');
+		let filePath = GetPath (ThisFile, i);
+		let preview = "No Preview";
+		if (filePath.slice (-4) == ".txt") {
+			preview = fm.readString (filePath).slice (0,40).replace (/\s/g, ' ');
+		} else if (filePath.slice (-4) == ".png") {
+			preview = "image";
+		}
 		
 		let InfoCell = row.addText ("Page: " + i.toString (), preview);
 		InfoCell.widthWeight = 80;
