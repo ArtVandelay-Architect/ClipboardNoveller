@@ -5,7 +5,7 @@ let fm = FileManager.local ();
 let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
 // json file containing the list of file names
 // Loads into an array of objects with attributes `filename`, `pages` 
-// and optionally `hiddenPages[]`
+// and optionally `hiddenPages[]`, `class=(txt,img,html)`
 let lofPath = fm.joinPath (dirPath,"/lof.json");  
 
 // If the path does not exist, create one
@@ -204,9 +204,16 @@ function UpdatePageList (ThisFile){
 	let NewBtn = toprow.addButton ("📃"); // A button with a page on it
 	NewBtn.widthWeight = 20;
 	NewBtn.onTap = () => {
-		AddPage (ThisFile);
+		AddPage (ThisFile, "txt");
 	}
 	NewBtn.rightAligned ();
+	
+	let NewPicBtn = toprow.addButton ("🖼️"); // A button with a picture on it
+	NewPicBtn.widthWeight = 20;
+	NewPicBtn.onTap = () => {
+		AddPage (ThisFile, "img");
+	}
+	NewPicBtn.rightAligned ();
 	
 	let ShowHiddenBtn = toprow.addButton ("😐"); // Indicates "unhide"
 	ShowHiddenBtn.widthWeight = 20;
@@ -233,8 +240,8 @@ function UpdatePageList (ThisFile){
 		
 		row.dismissOnSelect = false; //don't close the table when a row is selected
 		
-		row.onSelect = (idx) => { // idx is the index of the row being selected
-			OpenPage (ThisFile, idx);
+		row.onSelect = (idx) => { 
+			OpenPage (ThisFile, i);
 		}
 
 		let preview = fm.readString (
@@ -263,14 +270,29 @@ function UpdatePageList (ThisFile){
 	}
 }
 
-async function AddPage(ThisFile){
+// Grab an image from either the text or image pasteboard
+async function AddPage (ThisFile, fileType) {
+	var content;
+	if (fileType == "txt") {
+		content = Pasteboard.paste ();
+	} else if (fileType == "img") {
+		content = Pasteboard.pasteImage();
+	}
+
+	if (content == null) {
+		return;
+	}
+
 	let files = LoadFiles (); // Load LOF to update the page numbers
 	let i = ThisFile.pages + 1; // Page number for the new page
-	let content = Pasteboard.paste ();
 
 	let a = new Alert ();
 	a.title = "Confirm Adding?";
-	a.message = content; // Provide the clipboard as a sample
+	if (fileType == "txt") {
+		a.message = content; // Provide the clipboard as a sample
+	} else {
+		a.message = "Preview not Available";
+	}
 	a.addCancelAction ("Cancel");
 	a.addAction ("Confirm");
 	
@@ -286,12 +308,19 @@ async function AddPage(ThisFile){
 			}	
 		}
 		SaveFiles (files);
-		
-		// Get the file name dirPath/filenameI.txt
-		let PagePath = GetPath (ThisFile, i);
-		fm.writeString (PagePath, content);
-		
 		ThisFile.pages ++; // Add 1 to the pages in ThisFile to update the menu
+		
+		// Get the file name dirPath/filenameI.txt or png
+		let PagePath = fm.joinPath (dirPath, 
+			                    "/" + ThisFile.filename + i.toString ());
+		if (fileType == "txt") {
+			PagePath = PagePath + ".txt";
+			fm.writeString (PagePath, content);
+		} else if (fileType == "img") {
+			PagePath = PagePath + ".png";
+			fm.writeImage (PagePath, content);
+		}
+
 		
 		UpdatePageList (ThisFile);
 		PageList.reload ();
@@ -347,8 +376,15 @@ function MovePageUp (ThisFile, PageNum) {
 }
 
 function GetPath (ThisFile, PageNum) {
-	return fm.joinPath (dirPath, "/" + ThisFile.filename + PageNum.toString () + ".txt");
-}	
+	let path = fm.joinPath (dirPath, "/" + ThisFile.filename + PageNum.toString ());
+
+	if (fm.fileExists (path + ".txt")) {
+		return path + ".txt";	
+	}
+	if (fm.fileExists (path + ".png")) {
+		return path + ".png";	
+	}
+}
 
 function OpenPage (ThisFile, index) {
 	let PagePath = GetPath (ThisFile, index);
