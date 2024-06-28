@@ -377,7 +377,7 @@ function MovePageUp (ThisFile, PageNum) {
 	}
 
 	// Cannot be bordered with random string generation
-	let nonsense = "oreetdoloremagnaalisnostcitationullamc" + p1;
+	let nonsense = p1 + "_oreetdoloremagnaalisnostcitationullamc";
 	// Swap files
 	fm.move (p1, nonsense);
 	fm.move (p2, newP1);
@@ -385,10 +385,6 @@ function MovePageUp (ThisFile, PageNum) {
 
 	// Clean up
 	fm.remove (nonsense);
-	if (GetFileSuffix (p1) != GetFileSuffix (p2)) {
-		fm.remove (p1);
-		fm.remove (p2);
-	}
 }
 
 function GetPath (ThisFile, PageNum) {
