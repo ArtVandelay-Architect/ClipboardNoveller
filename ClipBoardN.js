@@ -5,18 +5,43 @@ let fm = FileManager.local ();
 let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
 // json file containing the list of file names
 // Loads into an array of objects with attributes `filename`, `pages` 
-// and optionally `hiddenPages[]`, `class=(txt,img,html)`
+// and optionally `hiddenPages[]`
 let lofPath = fm.joinPath (dirPath,"/lof.json");  
+
+// The default HTML display
+let strHTML = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+<body>
+<style>
+body {
+	background-color: #000000;
+}
+textarea {
+	width: 80em;
+	height: 50em;
+	border: 2px solid #cccccc;
+	padding: 5px;
+	overflow: auto;
+   -webkit-overflow-scrolling: touch;
+	font-family: "Lucida Console", Monaco, monospace
+}
+</style>
+<textarea id="taEditor">${textContent}</textarea>
+</body>
+</html>`;
 
 // If the path does not exist, create one
 if (!fm.fileExists(dirPath)){
 	fm.createDirectory(dirPath);
 }
 
-// Initialise a table to display to files
+// Initialise a table to display the files
 let table = new UITable();
 table.showSeparators = true;
-UpdateTable(); //Update the list when the program starts
+UpdateTable(); // Update the list when the program starts
 
 // Initialise a table to display all the pages in a file
 let PageList = new UITable;
@@ -176,13 +201,13 @@ function FileCompare (a, b) {
 }
 
 // Opening a file
-function OpenFile(ThisFile){	
+function OpenFile(ThisFile) {
 	PageList.reload ();
 	UpdatePageList (ThisFile);
 	PageList.present (true);
 }
 
-function UpdatePageList (ThisFile){
+function UpdatePageList (ThisFile) {
 	PageList.removeAllRows ();  //remove all the previous contents
 
 	let toprow = new UITableRow (); //the top row with options to add new pages
@@ -227,8 +252,8 @@ function UpdatePageList (ThisFile){
 	PageList.addRow (toprow);	
 
 	for (let i = 1; i <= ThisFile.pages; i++) {
-		// Do not display hidden pages, if such feature was enabled
-		if (ThisFile.hasOwnProperty("hiddenPages")) {
+		// Do not display hidden pages, if such feature were enabled
+		if (ThisFile.hasOwnProperty ("hiddenPages")) {
 			if (ThisFile.hiddenPages.includes (i)) {
 				if (!showHiddenPages) {
 					continue;
@@ -239,6 +264,7 @@ function UpdatePageList (ThisFile){
 		let row = new UITableRow ();
 		
 		row.dismissOnSelect = false; //don't close the table when a row is selected
+		row.height = 60;
 		
 		row.onSelect = (idx) => { 
 			OpenPage (ThisFile, i);
@@ -439,4 +465,22 @@ function SwapFileSuffix (filePath, newSuffix) {
 	
 	// Return the file path with the suffix replaced
 	return filePath.substring (0, lastDotIndex + 1) + newSuffix;
+}
+
+// To facilitate the edit of files, we shall use the sin that is HTML
+
+async function EditPage (ThisFile, index) {
+	let PagePath = GetPath (ThisFile, index);
+
+	// Required to evaluate the html
+	textContent = fm.readString (PagePath);
+
+	let editView = new WebView ();
+	editView.loadHTML (strHTML);
+
+	await editView.present ();
+
+	let resultString = await editView.evaluateJavaScript (`document.getElementById("taEditor").value`);
+
+	log (resultString)
 }
