@@ -27,6 +27,8 @@ textarea {
 	overflow: auto;
    -webkit-overflow-scrolling: touch;
 	font-family: "Lucida Console", Monaco, monospace
+	background-color: #000;
+	color: #fff;
 }
 </style>
 <! textContent (with surrounding underscores)
@@ -442,7 +444,7 @@ async function OpenPage (ThisFile, index) {
 
 		let resultString = await editView.evaluateJavaScript (`document.getElementById("taEditor").value`);
 
-		log (resultString);
+		log (resultString); // WIP
 	} else {
 		let ql = QuickLook;
 		ql.present (PagePath, true);
@@ -485,11 +487,6 @@ function SwapFileSuffix (filePath, newSuffix) {
 	
 	// Return the file path with the suffix replaced
 	return filePath.substring (0, lastDotIndex + 1) + newSuffix;
-}
-
-// To facilitate the edit of files, we shall use the sin that is HTML
-
-async function EditPage (ThisFile, index) {
 }
 
 // Load the proper HTML script and
