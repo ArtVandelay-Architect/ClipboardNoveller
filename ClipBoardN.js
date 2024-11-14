@@ -19,16 +19,17 @@ let novelDisplayHTML = `<!DOCTYPE html>
 body {
 	background-color: #000000;
 }
+<!-- An iPhone 13 mini screen is about 30*60em -->
 textarea {
 	width: 30em;
 	height: 50em;
 	border: 2px solid #cccccc;
+	background-color: #000;
+	color: #fff;
 	padding: 5px;
 	overflow: auto;
    -webkit-overflow-scrolling: touch;
 	font-family: "Lucida Console", Monaco, monospace
-	background-color: #000;
-	color: #fff;
 }
 </style>
 <! textContent (with surrounding underscores)
