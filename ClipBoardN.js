@@ -428,7 +428,7 @@ function GetPath (ThisFile, PageNum) {
 	}
 }
 
-function OpenPage (ThisFile, index) {
+async function OpenPage (ThisFile, index) {
 	let PagePath = GetPath (ThisFile, index);
 	if (GetFileSuffix (PagePath) == "txt") {
 
