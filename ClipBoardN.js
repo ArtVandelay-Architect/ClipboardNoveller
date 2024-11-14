@@ -29,7 +29,8 @@ textarea {
 	font-family: "Lucida Console", Monaco, monospace
 }
 </style>
-<!-- __textContent__ will be replaced when evaluating -->
+<! textContent (with surrounding underscores)
+will be replaced when evaluating -->
 <textarea id="taEditor">__textContent__</textarea>
 </body>
 </html>`;
@@ -441,7 +442,7 @@ async function OpenPage (ThisFile, index) {
 
 		let resultString = await editView.evaluateJavaScript (`document.getElementById("taEditor").value`);
 
-		log (resultString)
+		log (resultString);
 	} else {
 		let ql = QuickLook;
 		ql.present (PagePath, true);
@@ -509,7 +510,7 @@ function EvaluateDisplayHTML (textContent) {
 		html = fm.readString (p);
 	}
 
-	html = html.replace ("__OverrideDisplayHTML__", textContext);
+	html = html.replace ("__textContent__", textContent);
 	return html;
 }
 
