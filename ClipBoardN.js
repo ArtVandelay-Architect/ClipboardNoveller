@@ -429,8 +429,8 @@ function GetPath (ThisFile, PageNum) {
 }
 
 function OpenPage (ThisFile, index) {
-	if (GetFileSuffix (filePath) == "txt") {
-		let PagePath = GetPath (ThisFile, index);
+	let PagePath = GetPath (ThisFile, index);
+	if (GetFileSuffix (PagePath) == "txt") {
 
 		textContent = fm.readString (PagePath);
 
@@ -443,7 +443,6 @@ function OpenPage (ThisFile, index) {
 
 		log (resultString)
 	} else {
-		let PagePath = GetPath (ThisFile, index);
 		let ql = QuickLook;
 		ql.present (PagePath, true);
 	}
