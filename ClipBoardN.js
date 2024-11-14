@@ -429,9 +429,25 @@ function GetPath (ThisFile, PageNum) {
 }
 
 function OpenPage (ThisFile, index) {
-	let PagePath = GetPath (ThisFile, index);
-	let ql = QuickLook;
-	ql.present (PagePath, true);
+	if (GetFileSuffix (filePath) == "txt") {
+		let PagePath = GetPath (ThisFile, index);
+
+		textContent = fm.readString (PagePath);
+
+		let editView = new WebView ();
+		editView.loadHTML (EvaluateDisplayHTML (textContent));
+
+		await editView.present ();
+
+		let resultString = await editView.evaluateJavaScript (`document.getElementById("taEditor").value`);
+
+		log (resultString)
+	} else {
+		let PagePath = GetPath (ThisFile, index);
+		let ql = QuickLook;
+		ql.present (PagePath, true);
+	}
+
 }
 
 function RemovePageNumFromArray (Arr, PageNum) {
@@ -474,19 +490,6 @@ function SwapFileSuffix (filePath, newSuffix) {
 // To facilitate the edit of files, we shall use the sin that is HTML
 
 async function EditPage (ThisFile, index) {
-	let PagePath = GetPath (ThisFile, index);
-
-	// Required to evaluate the html
-	textContent = fm.readString (PagePath);
-
-	let editView = new WebView ();
-	editView.loadHTML (EvaluateDisplayHTML (textContent));
-
-	await editView.present ();
-
-	let resultString = await editView.evaluateJavaScript (`document.getElementById("taEditor").value`);
-
-	log (resultString)
 }
 
 // Load the proper HTML script and
