@@ -9,7 +9,7 @@ let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
 let lofPath = fm.joinPath (dirPath,"/lof.json");  
 
 // The default HTML display
-let strHTML = `<!DOCTYPE html>
+let novelDisplayHTML = `<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,7 +20,7 @@ body {
 	background-color: #000000;
 }
 textarea {
-	width: 80em;
+	width: 30em;
 	height: 50em;
 	border: 2px solid #cccccc;
 	padding: 5px;
@@ -29,9 +29,13 @@ textarea {
 	font-family: "Lucida Console", Monaco, monospace
 }
 </style>
-<textarea id="taEditor">${textContent}</textarea>
+<!-- __textContent__ will be replaced when evaluating -->
+<textarea id="taEditor">__textContent__</textarea>
 </body>
 </html>`;
+// Modify the file to override the display HTML
+let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
+
 
 // If the path does not exist, create one
 if (!fm.fileExists(dirPath)){
@@ -273,7 +277,7 @@ function UpdatePageList (ThisFile) {
 		let filePath = GetPath (ThisFile, i);
 		let preview = "No Preview";
 		if (GetFileSuffix (filePath) == "txt") {
-			preview = fm.readString (filePath).slice (0,40).replace (/\s/g, ' ');
+			preview = fm.readString (filePath).slice (0,40).replaceAll (/\s/g, ' ');
 		} else if (GetFileSuffix (filePath) == "png") {
 			preview = "image";
 		}
@@ -476,7 +480,7 @@ async function EditPage (ThisFile, index) {
 	textContent = fm.readString (PagePath);
 
 	let editView = new WebView ();
-	editView.loadHTML (strHTML);
+	editView.loadHTML (EvaluateDisplayHTML (textContent));
 
 	await editView.present ();
 
@@ -484,3 +488,42 @@ async function EditPage (ThisFile, index) {
 
 	log (resultString)
 }
+
+// Load the proper HTML script and
+// replace the __textContent__ in the display script
+function EvaluateDisplayHTML (textContent) {
+	let files = LoadFiles ();
+
+	p = ""
+	for (c = 0; c < files.length; c++) {
+		// Where the script is
+		if (files[c].name == overrideDisplayHTMLPath) {
+			p = GetPath (files[c], 1);
+		}
+	}
+
+	html = novelDisplayHTML;
+	if (p != "") {
+		html = fm.readString (p);
+	}
+
+	html = html.replace ("__OverrideDisplayHTML__", textContext);
+	return html;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
