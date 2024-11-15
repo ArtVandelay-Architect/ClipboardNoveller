@@ -11,33 +11,57 @@ let lofPath = fm.joinPath (dirPath,"/lof.json");
 // The default HTML display
 let novelDisplayHTML = `<!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
+	<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
 <body>
-<style>
-body {
-	background-color: #000000;
-}
-<!-- An iPhone 13 mini screen is about 30*60em -->
-textarea {
-	width: 30em;
-	height: 50em;
-	border: 2px solid #cccccc;
-	background-color: #000;
-	color: #fff;
-	padding: 5px;
-	overflow: auto;
-   -webkit-overflow-scrolling: touch;
-	font-family: "Lucida Console", Monaco, monospace
-}
-</style>
-<! textContent (with surrounding underscores)
-will be replaced when evaluating -->
-<textarea id="taEditor">__textContent__</textarea>
+	<style>
+	body {
+		background-color: #000000;
+	}
+	<!-- An iPhone 13 mini screen is about 30*60em -->
+	button {
+		margin-button: 5em;
+		padding: 1em 1em;
+		background-color: #000;
+		color: #fff;
+	}
+	textarea {
+		width: 30em;
+		height: 50em;
+		border: 2px solid #cccccc;
+		background-color: #000;
+		color: #fff;
+		padding: 5px;
+		overflow: auto;
+		-webkit-overflow-scrolling: touch;
+		font-family: "Lucida Console", Monaco, monospace
+	}
+	</style>
+
+	<button onclick="toggleEditable()">Toggle Edit</button>
+	<!-- textContent (with surrounding underscores) will be replaced -->
+	<textarea id="taEditor" readonly>__textContent__</textarea>
+
+	<script>
+		function toggleEditable() {
+			const textarea =
+				document.getElementById('myTextarea');
+			textarea.readOnly =
+				!textarea.readOnly;
+			if (textarea.readOnly) {
+				button.textContent = "Enable  Editing";
+			} else {
+				button.textContent = "Disable Editing";
+			}
+		}
+	</script>
 </body>
 </html>`;
+
 // Modify the file to override the display HTML
+// The display HTML must have a text area `taEditor`
+// and a text content __textContent__ for replacement
 let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
 
 
@@ -443,7 +467,9 @@ async function OpenPage (ThisFile, index) {
 
 		await editView.present ();
 
-		let resultString = await editView.evaluateJavaScript (`document.getElementById("taEditor").value`);
+		let resultString = await editView.evaluateJavaScript (
+			`document.getElementById("taEditor").value`
+		);
 
 		log (resultString); // WIP
 	} else {
