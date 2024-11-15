@@ -21,16 +21,12 @@ let novelDisplayHTML = `<!DOCTYPE html>
 	}
 	<!-- An iPhone 13 mini screen is about 30*60em -->
 	button {
-		width: 30em;
-		height: 5em;
-		margin-button: 5em;
-		padding: 1em 1em;
 		background-color: #000;
 		color: #fff;
 	}
 	textarea {
 		width: 30em;
-		height: 50em;
+		height: 55em;
 		border: 2px solid #cccccc;
 		background-color: #000;
 		color: #fff;
