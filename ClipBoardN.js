@@ -21,6 +21,8 @@ let novelDisplayHTML = `<!DOCTYPE html>
 	}
 	<!-- An iPhone 13 mini screen is about 30*60em -->
 	button {
+		width: 30em;
+		height: 5em;
 		margin-button: 5em;
 		padding: 1em 1em;
 		background-color: #000;
@@ -39,18 +41,20 @@ let novelDisplayHTML = `<!DOCTYPE html>
 	}
 	</style>
 
-	<button onclick="toggleEditable()">Toggle Edit</button>
+	<button id="toggleBtn" onclick="toggleEditable()">Enable Edit</button>
 	<!-- textContent (with surrounding underscores) will be replaced -->
 	<textarea id="taEditor" readonly>__textContent__</textarea>
 
 	<script>
 		function toggleEditable() {
 			const textarea =
-				document.getElementById('myTextarea');
-			textarea.readOnly =
-				!textarea.readOnly;
+				document.getElementById('taEditor');
+			const button =
+				document.getElementById('toggleBtn');
+
+			textarea.readOnly = !textarea.readOnly;
 			if (textarea.readOnly) {
-				button.textContent = "Enable  Editing";
+				button.textContent = "Enable Editing";
 			} else {
 				button.textContent = "Disable Editing";
 			}
