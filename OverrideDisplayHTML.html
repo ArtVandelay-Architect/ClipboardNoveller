@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- Paste this file using ClipBoard Noveller as page 1 of __OverrideDisplayHTML__ -->
+<html>
+	<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+<body>
+	<style>
+	body {
+		background-color: #000000;
+	}
+	.container {
+		display: flex;
+		flex-direction: column;
+		align-items; center;
+	}
+	<!-- An iPhone 13 mini screen is about 30*60em -->
+	button {
+		background-color: #000;
+		color: #fff;
+		margin-buttom: 3em;
+		font-size: 16em;
+	}
+	textarea {
+		width: 30em;
+		height: 55em;
+		border: 2px solid #cccccc;
+		background-color: #000;
+		color: #fff;
+		padding: 5px;
+		overflow: auto;
+		-webkit-overflow-scrolling: touch;
+		font-family: "Lucida Console", Monaco, monospace
+	}
+	</style>
+
+	<div class="container">
+		<button id="toggleBtn" onclick="toggleEditable()">Enable Edit</button>
+		<!-- textContent (with surrounding underscores) will be replaced -->
+		<textarea id="taEditor" readonly>__textContent__</textarea>
+	</div>
+
+	<script>
+		function toggleEditable() {
+			const textarea =
+				document.getElementById('taEditor');
+			const button =
+				document.getElementById('toggleBtn');
+
+			textarea.readOnly = !textarea.readOnly;
+			if (textarea.readOnly) {
+				button.textContent = "Enable Editing";
+			} else {
+				button.textContent = "Disable Editing";
+			}
+		}
+	</script>
+</body>
+</html>`;
