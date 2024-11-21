@@ -369,7 +369,7 @@ function create_file (filename) {
 		save_files ();
 	}
 	update_main_table ();
-	main_table.reload ();
+	mainTable.reload ();
 }
 
 // unlink the file
@@ -406,7 +406,7 @@ function update_main_table() {
 	RefBtn.widthWeight = 20;
 	RefBtn.onTap = () => {
 		update_main_table ();
-		main_table.reload ();
+		mainTable.reload ();
 	}
 	
 	let HeadTitle = topRow.addText ("Menu");
@@ -431,7 +431,7 @@ function update_main_table() {
 		); 		
 	}
 		
-	main_table.addRow (topRow);
+	mainTable.addRow (topRow);
 
 	files.sort (file_compare);
 	for (let i = 0; i < files.length; i++) {
