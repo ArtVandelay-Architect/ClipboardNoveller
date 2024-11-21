@@ -400,18 +400,18 @@ function update_main_table() {
 	topRow.isHeader = true;
 	topRow.backgroundColor = new Color ("2B2B2B",255);
 
-	let RefBtn = toprow.addButton ("🔄"); // Refresh button
+	let RefBtn = topRow.addButton ("🔄"); // Refresh button
 	RefBtn.widthWeight = 20;
 	RefBtn.onTap = () => {
 		update_main_table ();
 		table.reload ();
 	}
 	
-	let HeadTitle = toprow.addText ("Menu");
+	let HeadTitle = topRow.addText ("Menu");
 	HeadTitle.widthWeight = 60;
 	HeadTitle.centerAligned ();
 
-	let NewBtn = toprow.addButton ("📂"); // A button with a file on it
+	let NewBtn = topRow.addButton ("📂"); // A button with a file on it
 	NewBtn.widthWeight = 20;
 	NewBtn.rightAligned ();
 	NewBtn.onTap = () => {
@@ -429,7 +429,7 @@ function update_main_table() {
 		); 		
 	}
 		
-	table.addRow (toprow);
+	table.addRow (topRow);
 
 	files.sort (file_compare);
 	for (let i = 0; i < files.length; i++) {
@@ -459,6 +459,7 @@ function update_main_table() {
 					unlink_file (i, a.textFieldValue (0));
 				},
 				function () {} 
+			);
 		}
 
 		mainTable.addRow (row);
@@ -476,7 +477,7 @@ function p_table (code) {
 
 // ---
 // Password protection, disabled by default
-passCode == "1234"
+let passCode = "1234"
 if (1 == 0) {
 	let LoadWarning = new Alert();
 	LoadWarning.title = "Password";
