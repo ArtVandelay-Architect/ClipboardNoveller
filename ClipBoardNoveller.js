@@ -1,5 +1,5 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.1
+// v1.0.2
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
@@ -244,7 +244,7 @@ function toggle_hide_page (fileIndex, pageNum) {
 	save_files ()
 
 	update_page_table (fileIndex);
-	page_table.reload ();
+	pageTable.reload ();
 }
 
 function move_page_up (fileIndex, pageNum) {
@@ -272,7 +272,7 @@ function move_page_up (fileIndex, pageNum) {
 	fm.move (nonsense, newP2);
 
 	update_page_table (fileIndex);
-	page_table.reload ();
+	pageTable.reload ();
 }
 
 // list the pages of a given file
@@ -307,11 +307,11 @@ function update_page_table (fileIndex) {
 	showHiddenBtn.onTap = () => {
 		showHiddenPages = !showHiddenPages;
 		update_page_table (fileIndex);
-		page_table.reload ();
+		pageTable.reload ();
 	}
 	showHiddenBtn.rightAligned ();
 
-	page_table.addRow (topRow);	
+	pageTable.addRow (topRow);	
 
 	for (let i = 1; i <= files[fileIndex].pages; i++) { // page number starts on 1
 		if (files[fileIndex].hasOwnProperty ("hiddenPages")) {
@@ -353,7 +353,7 @@ function update_page_table (fileIndex) {
 			toggle_hide_page (fileIndex, i);
 		}
 
-		page_table.addRow (row);
+		pageTable.addRow (row);
 	}
 }
 
