@@ -1,5 +1,5 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.3
+// v1.0.4
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
@@ -104,12 +104,16 @@ let novelDisplayHTML = `<!DOCTYPE html>
 // the display HTML must have a text area `taEditor`
 // and a text content __textContent__ for replacement
 let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
+
+htmlIndex = file_name_search (overrideDisplayHTMLPath);
+if (htmlIndex != -1) { 
+	novelDisplayHTML = fm.readString (get_path (htmlIndex, 1));
+}
+
+// replace the appropriate keywords
 function evaluate_display_html (textContent) {
-	htmlIndex = file_name_search (overrideDisplayHTMLPath);
-	if (htmlIndex != -1) { 
-		return fm.readString (get_path (htmlIndex, 1));
-	}
-	return novelDisplayHTML;
+	htmlDoc = novelDisplayHTML.replace ("__textContent__", textContent);
+	return htmlDoc;
 }
 
 // ---
@@ -175,7 +179,7 @@ async function add_page (fileIndex) {
 async function edit_page (fileIndex, pageNum, newContent) {
 	let pagePath = get_path (fileIndex, pageNum);
 
-	if (getFileSuffix (pagePath) == "txt") { // text editing is supported
+	if (get_file_suffix (pagePath) == "txt") { // text editing is supported
 		textContent = fm.readString (pagePath);
 
 		let a = new Alert ();
@@ -199,7 +203,7 @@ async function edit_page (fileIndex, pageNum, newContent) {
 async function display_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
 
-	if (getFileSuffix (pagePath) == "txt") { // use html display
+	if (get_file_suffix (pagePath) == "txt") { // use html display
 		textContent = fm.readString (pagePath);
 		let editView = new WebView ();
 		editView.loadHTML (evaluate_display_html (textContent));
