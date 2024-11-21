@@ -1,4 +1,5 @@
-// ClipBoardNoveller for Scriptable by Luke Li 1.0
+// ClipBoardNoveller for Scriptable by Luke Li
+// v1.0.1
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
