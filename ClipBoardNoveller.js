@@ -79,9 +79,9 @@ let novelDisplayHTML = `<!DOCTYPE html>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 <body>
+	<!-- An iPhone 13 mini screen is about 30*60em -->
 	<style>
 	body {background-color: #000000;}
-	<!-- An iPhone 13 mini screen is about 30*60em -->
 	textarea {
 		width: 30em;
 		height: 55em;
