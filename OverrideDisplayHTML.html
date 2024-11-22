@@ -14,26 +14,27 @@
 	.container {
 		display: flex;
 		flex-direction: column;
-		align-items; center;
+		align-items: center;
 	}
 	.button-container {
 		display: flex;
 		justify-content: center;
 		margin-bottom: 1em;
-		gap: 2em;
+		gap: 1em;
 	}
 	button {
-		padding: 2em 1em;
+		padding: 0.5em 1em;
 		background-color: #000;
 		color: #fff;
-		margin-buttom: 3em;
-		font-size: 2em;
+		margin-buttom: 1em;
+		font-size: 1em;
 		text-align: center;
+		width: 14em;
 		font-family: "Lucida Console", Monaco, monospace
 	}
 	textarea {
 		width: 30em;
-		height: 55em;
+		height: 58em;
 		border: 2px solid #cccccc;
 		background-color: #000;
 		color: #fff;
@@ -45,8 +46,10 @@
 	</style>
 
 	<div class="container">
-		<button id="toggleEditBtn" onclick="toggleEditable()">Enable Edit</button>
-		<button id="applyEditBtn" onclick="applyEdit()">Apply Edit</button>
+		<div class="button-container">
+			<button id="toggleEditBtn" onclick="toggleEditable()">Enable Edit</button>
+			<button id="applyEditBtn" onclick="applyEdit()">Apply Edit</button>
+		</div>
 		<!-- textContent (with surrounding underscores) will be replaced -->
 		<textarea id="taEditor" readonly>__textContent__</textarea>
 	</div>
@@ -61,14 +64,17 @@
 
 			textarea.readOnly = !textarea.readOnly;
 			if (textarea.readOnly) {
-				button.textContent = "Enable Editing";
+				button.textContent = "Enable Edit";
 			} else {
-				button.textContent = "Disable Editing";
+				button.textContent = "Disable Edit";
 			}
 		}
 
 		function applyEdit() {
 			__edited__ = true;
+			const button =
+				document.getElementById('applyEditBtn');
+			button.textContent = "Applied"
 		}
 	</script>
 </body>

@@ -1,5 +1,5 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.6
+// v1.0.7
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
@@ -110,10 +110,14 @@ if (htmlIndex != -1) {
 	let finalVersion = files[htmlIndex].pages;
 	novelDisplayHTML = fm.readString (get_path (htmlIndex, finalVersion));
 }
-
 // replace the appropriate keywords
 function evaluate_display_html (textContent) {
-	htmlDoc = novelDisplayHTML.replace ("__textContent__", textContent);
+	encodedText = textContent.replace (/&/g, '&amp;')
+	                         .replace (/</g, '&lt;')
+	                         .replace (/>/g, '&gt;')
+	                         .replace (/"/g, '&quot;')
+	                         .replace (/'/g, '&#039;');
+	htmlDoc = novelDisplayHTML.replace ("__textContent__", encodedText);
 	return htmlDoc;
 }
 
@@ -213,10 +217,10 @@ async function display_page (fileIndex, pageNum) {
 
 		let resultString = await editView.evaluateJavaScript (
 			`
+			result = "__NaN__";
 			if (__edited__)
-				return document.getElementById("taEditor").value;
-			else
-				return "__NaN__";
+				result = document.getElementById("taEditor").value;
+			result
 			`
 		);
 
@@ -388,6 +392,7 @@ function unlink_file (fileIndex, confirmation) {
 		if (fileIndex != files.length) {
 			files[fileIndex] = end;
 		}
+		save_files ();
 	}
 	update_main_table ();
 	mainTable.reload();
