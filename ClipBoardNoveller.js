@@ -1,11 +1,11 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.9
+// v1.0.10
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
 // file which leads to all the text files.
 
-// This is a largely re-written version of the previous script, but the any file created
+// This is a largely re-written version of the previous script, but any file created
 // should remain compatible.
 
 // ---
@@ -206,6 +206,9 @@ async function edit_page (fileIndex, pageNum, newContent) {
 			fm.writeString (pagePath, newContent);		
 		}
 	}
+
+	update_page_table (fileIndex);
+	pageTable.reload ();
 }
 
 async function display_page (fileIndex, pageNum) {
@@ -251,7 +254,7 @@ function toggle_hide_page (fileIndex, pageNum) {
 			}
 		}
 	} else {
-		files[fileIndex].hiddePages.push (pageNum);
+		files[fileIndex].hiddenPages.push (pageNum);
 	}
 	save_files ()
 
@@ -282,6 +285,19 @@ function move_page_up (fileIndex, pageNum) {
 	fm.move (p1, nonsense);
 	fm.move (p2, newP1);
 	fm.move (nonsense, newP2);
+
+	// If either page has been hidden
+	pageHiHidden = files[fileIndex].hiddenPages.indexOf (pageNum - 1);
+	pageLoHidden = files[fileIndex].hiddenPages.indexOf (pageNum);
+	if (pageLoHidden >= 0) {
+		if (pageHiHidden == -1) {
+			files[fileIndex].hiddenPages[pageLoHidden] += 1;
+		}
+	} else if (pageHiHidden >= 0) {
+		if (pageLoHidden == -1) {
+			files[fileIndex].hiddenPages[pageHiHidden] -= 1;
+		}
+	}
 
 	update_page_table (fileIndex);
 	pageTable.reload ();
