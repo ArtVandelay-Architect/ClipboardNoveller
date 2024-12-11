@@ -1,5 +1,5 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.13
+// v1.0.14
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
@@ -217,11 +217,8 @@ async function edit_page (fileIndex, pageNum, newContent) {
 	pageTable.reload ();
 }
 
-async function display_page (fileIndex, pageNum, annotation = false) {
+async function display_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
-	if (annotation) {
-		pagePath = get_annotation_path (fileIndex, pageNum);
-	}
 
 	if (get_file_suffix (pagePath) == "txt") { // use html display
 		textContent = fm.readString (pagePath);
@@ -248,12 +245,41 @@ async function display_page (fileIndex, pageNum, annotation = false) {
 	}
 }
 
-function get_or_create_annotation (fileIndex, pageNum) {
+async function get_or_create_annotation (fileIndex, pageNum) {
 	let annoPath = get_annotation_path (fileIndex, pageNum);
 	if (!fm.fileExists (annoPath)) {
 		fm.writeString(annoPath, "");
 	}
-	display_page (fileIndex, pageNum);
+
+	let content = fm.readString (annoPath);
+
+	let a = new Alert ();
+	a.title = "Annotation";
+	a.message = content.slice (0, 1000);
+
+	a.addAction ("Copy");
+	a.addAction ("Paste");
+	a.addCancelAction ("Cancel");
+
+	let result = await a.presentAlert ();
+
+	if (result == 0) { // Copy
+		Pasteboard.copy (content);
+	} else if (result == 1) {
+		content = Pasteboard.paste ()
+
+		let a2 = new Alert ();
+		a2.title = "Overwrite";
+		a2.message = content.slice (0, 1000);
+		a2.addCancelAction ("Cancel");
+		a2.addAction ("Confirm");
+
+		let result = await a.presentAlert ();
+
+		if (result == 0) {
+			fm.writeString (annoPath, content);
+		}
+	}
 }
 
 function toggle_hide_page (fileIndex, pageNum) {
@@ -382,9 +408,6 @@ function update_page_table (fileIndex) {
 			preview = fm.readString (filePath);
 		} else if (get_file_suffix (filePath) == "png") {
 			preview = "Image: No Preview";
-			if (files[fileIndex].hasOwnProperty ("annotation")) {
-				preview = "Image: " + fm.readString (get_annotation_path (fileIndex, i));
-			}
 		}
 		preview = preview.replaceAll (/\s/g, ' ');
 		preview = preview.slice (0, 75);
