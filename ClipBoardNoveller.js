@@ -1,5 +1,5 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.11
+// v1.0.12
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
@@ -14,7 +14,7 @@ let fm = FileManager.local ();
 let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
 // json file containing the list of file names
 // loads into an array of objects with attributes `filename`, `pages` 
-// and optionally `hiddenPages[]`
+// and optionally `hiddenPages[]`, `annotation`
 let lofPath = fm.joinPath (dirPath,"/lof.json");  
 
 // If the path does not exist, create one.
@@ -69,6 +69,12 @@ function get_path (fileIndex, pageNum, fileType="") {
 	if (fm.fileExists (path + ".png") || "png" == fileType) {
 		return path + ".png";	
 	}
+}
+// get the annotation path to a page
+function get_annotation_path (fileIndex, pageNum) {
+	let path = fm.joinPath (dirPath,
+		                "/" + files[fileIndex].filename + pageNum.toString ());
+	return path + "_annotation.txt";
 }
 
 // ---
@@ -239,6 +245,14 @@ async function display_page (fileIndex, pageNum) {
 	}
 }
 
+function get_or_create_annotation (fileIndex, pageNum) {
+	let annoPath = get_annotation_path (fileIndex, pageNum);
+	if (!fm.fileExists (annoPath)) {
+		fm.writeString(annoPath, "");
+	}
+	display_page (fileIndex, pageNum);
+}
+
 function toggle_hide_page (fileIndex, pageNum) {
 	// create this attribute if it did not exist for backwards compatibility
 	if (!files[fileIndex].hasOwnProperty ("hiddenPages")) {
@@ -363,11 +377,26 @@ function update_page_table (fileIndex) {
 		let preview = "No Preview";
 		if (get_file_suffix (filePath) == "txt") {
 			preview = fm.readString (filePath);
-			preview = preview.replaceAll (/\s/g, ' ');
-			preview = preview.slice (0, 75);
+		} else if (get_file_suffix (filePath) == "png") {
+			preview = "Image: No Preview";
+			if (files[fileIndex].hasOwnProperty ("annotation")) {
+				preview = "Image: " + fm.readString (get_annotation_path (fileIndex, i));
+			}
 		}
+		preview = preview.replaceAll (/\s/g, ' ');
+		preview = preview.slice (0, 75);
 		let infoCell = row.addText ("Page: " + i.toString (), preview);
 		infoCell.widthWeight = 80;
+	
+		// For images, add an annotation button
+		if (get_file_suffix (filePath) == "png") {
+			let anBtn = row.addButton ("📎"); // paper clip
+			anBtn.widthWeight = 10;
+			anBtn.leftAligned ();
+			anBtn.onTap = () => {
+				get_or_create_annotation(fileIndex, i);
+			}
+		}
 
 		let upBtn = row.addButton ("🔼"); // up arrow
 		upBtn.widthWeight = 10;
