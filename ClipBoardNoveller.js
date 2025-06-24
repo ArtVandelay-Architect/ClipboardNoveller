@@ -18,8 +18,8 @@ let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
 let lofPath = fm.joinPath (dirPath,"/lof.json");  
 
 // If the path does not exist, create one.
-if (!fm.fileExists(dirPath)){
-	fm.createDirectory(dirPath);
+if (!fm.fileExists (dirPath)){
+	fm.createDirectory (dirPath);
 }
 
 // a list of files available globally
@@ -31,7 +31,7 @@ if (fm.fileExists (lofPath)) {
 	files = JSON.parse (raw)
 }
 function save_files () {
-	fm.writeString (lofPath,JSON.stringify(files));
+	fm.writeString (lofPath,JSON.stringify (files));
 }
 // used to sort file by name
 function file_compare (a, b) { 
@@ -79,52 +79,16 @@ function get_annotation_path (fileIndex, pageNum) {
 
 // ---
 // initialise the HTML
-let novelDisplayHTML = `<!DOCTYPE html>
-<html>
-	<head>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	</head>
-<body>
-	<!-- An iPhone 13 mini screen is about 30*60em -->
-	<style>
-	body {background-color: #000000;}
-	textarea {
-		width: 30em;
-		height: 55em;
-		border: 2px solid #cccccc;
-		background-color: #000;
-		color: #fff;
-		padding: 5px;
-		overflow: auto;
-		-webkit-overflow-scrolling: touch;
-		font-family: "Lucida Console", Monaco, monospace
-	}
-	</style>
-	<textarea id="taEditor" readonly>__textContent__</textarea>
-	<script> var __edited__ = false; </script>
-	<!-- __textContent__ will be replaced before display -->
-	<!-- the variable __edited__ determines if the file will be written -->
-</body>
-</html>`;
+let novelDisplayHTML = "";
 // modify the file to override the display HTML
-// the display HTML must have a text area `taEditor`
-// and a text content __textContent__ for replacement
+// the display HTML must have a function ODH_LoadFile(url)
+// and a __textValue__ and __edited__ to enable editing
 let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
 
 htmlIndex = file_name_search (overrideDisplayHTMLPath);
 if (htmlIndex != -1) { 
 	let finalVersion = files[htmlIndex].pages;
 	novelDisplayHTML = fm.readString (get_path (htmlIndex, finalVersion));
-}
-// replace the appropriate keywords
-function evaluate_display_html (textContent) {
-	encodedText = textContent.replace (/&/g, '&amp;')
-	                         .replace (/</g, '&lt;')
-	                         .replace (/>/g, '&gt;')
-	                         .replace (/"/g, '&quot;')
-	                         .replace (/'/g, '&#039;');
-	htmlDoc = novelDisplayHTML.replace ("__textContent__", encodedText);
-	return htmlDoc;
 }
 
 // ---
@@ -146,7 +110,7 @@ async function add_page (fileIndex) {
 	let fileType = 'txt';
 	if (content == null) {
 		// if not text, try image
-		content = Pasteboard.pasteImage();
+		content = Pasteboard.pasteImage ();
 		fileType = "png";
 	}
 
@@ -187,7 +151,7 @@ async function add_page (fileIndex) {
 	}
 
 	update_page_table (fileIndex);
-	pageTable.reload();
+	pageTable.reload ();
 }
 
 async function edit_page (fileIndex, pageNum, newContent) {
@@ -220,10 +184,20 @@ async function edit_page (fileIndex, pageNum, newContent) {
 async function display_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
 
-	if (get_file_suffix (pagePath) == "txt") { // use html display
-		textContent = fm.readString (pagePath);
+	if (get_file_suffix (pagePath) == "txt" ||
+	    get_file_suffix (pagePath) == "png") { // use html display
 		let editView = new WebView ();
-		editView.loadHTML (evaluate_display_html (textContent));
+		editView.loadHTML (novelDisplayHTML);
+
+		let loadScript = "ODH_LoadFile(" + pagePath + ")";
+		let evalResult = await editView.evaluateJavaScript (loadScript);
+		log (loadScript);
+
+		if (evalResult != 1) { // evaluation failed, fall back to ql
+			let ql = QuickLook;
+			ql.present (pagePath, true);
+			return;
+		}
 
 		await editView.present ();
 
@@ -231,7 +205,7 @@ async function display_page (fileIndex, pageNum) {
 			`
 			result = "__NaN__";
 			if (__edited__)
-				result = document.getElementById("taEditor").value;
+				result = __textValue__;
 			result
 			`
 		);
@@ -248,7 +222,7 @@ async function display_page (fileIndex, pageNum) {
 async function get_or_create_annotation (fileIndex, pageNum) {
 	let annoPath = get_annotation_path (fileIndex, pageNum);
 	if (!fm.fileExists (annoPath)) {
-		fm.writeString(annoPath, "");
+		fm.writeString (annoPath, "");
 	}
 
 	let content = fm.readString (annoPath);
@@ -280,7 +254,7 @@ async function get_or_create_annotation (fileIndex, pageNum) {
 		if (result == 0) {
 			fm.writeString (annoPath, content);
 		}
-	} else if (result == 3) {
+	} else if (result == 2) {
 		let ql = QuickLook;
 		ql.present (annoPath, false);
 	}
@@ -332,6 +306,10 @@ function move_page_up (fileIndex, pageNum) {
 	fm.move (p1, nonsense);
 	fm.move (p2, newP1);
 	fm.move (nonsense, newP2);
+
+	if (!files[fileIndex].hasOwnProperty ("hiddenPages")) {
+		files[fileIndex]["hiddenPages"] = [];
+	}
 
 	// If either page has been hidden
 	pageLoHidden = files[fileIndex].hiddenPages.indexOf (pageNum - 1);
@@ -424,7 +402,7 @@ function update_page_table (fileIndex) {
 			anBtn.widthWeight = 10;
 			anBtn.leftAligned ();
 			anBtn.onTap = () => {
-				get_or_create_annotation(fileIndex, i);
+				get_or_create_annotation (fileIndex, i);
 			}
 		}
 
@@ -454,7 +432,7 @@ function update_page_table (fileIndex) {
 function create_file (filename) {
 	// only proceed if the filename is legal
 	// and not duplicated
-	if (filename != "" && -1 == file_name_search(filename)){
+	if (filename != "" && -1 == file_name_search (filename)){
 		let NewFile = {"filename":filename, "pages":0};
 		files.push (NewFile);
 		save_files ();
@@ -469,14 +447,14 @@ function create_file (filename) {
 // but they can be overwritten with a file of the same name
 function unlink_file (fileIndex, confirmation) {
 	if ("UNLINK" == confirmation) {
-		let end = files.pop();
+		let end = files.pop ();
 		if (fileIndex != files.length) {
 			files[fileIndex] = end;
 		}
 		save_files ();
 	}
 	update_main_table ();
-	mainTable.reload();
+	mainTable.reload ();
 }
 
 // open a file entry to display the page list
@@ -487,7 +465,7 @@ function open_file (fileIndex) {
 }
 
 // populate the main table with files
-function update_main_table() {
+function update_main_table () {
 	mainTable.removeAllRows ();
 
 	topRow = new UITableRow (); // the top row with options
@@ -539,7 +517,7 @@ function update_main_table() {
 		infoCell.widthWeight = 80;
 
 		// We have an unlink/trash button instead of deletion.
-		let ulBtn = row.addButton("🗑️")
+		let ulBtn = row.addButton ("🗑️")
 		ulBtn.widthWeight = 20;
 		ulBtn.rightAligned ();
 		ulBtn.onTap = () => {
@@ -573,7 +551,7 @@ function p_table (code) {
 // Password protection, disabled by default
 let passCode = "1234"
 if (1 == 0) {
-	let LoadWarning = new Alert();
+	let LoadWarning = new Alert ();
 	LoadWarning.title = "Password";
 	LoadWarning.addTextField ("Input the Password");
 	LoadWarning.addAction ("Check");

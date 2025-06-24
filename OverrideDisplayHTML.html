@@ -19,17 +19,17 @@
 	.button-container {
 		display: flex;
 		justify-content: center;
-		margin-bottom: 1em;
-		gap: 1em;
+		margin-bottom: 0.3em;
+		gap: 0.3em;
 	}
 	button {
-		padding: 0.5em 1em;
+		padding: 0.3em 0em;
 		background-color: #000;
 		color: #fff;
-		margin-buttom: 1em;
+		margin-buttom: 0em;
 		font-size: 1em;
 		text-align: center;
-		width: 10em;
+		width: 6em;
 		font-family: "Lucida Console", Monaco, monospace
 	}
 	textarea {
@@ -43,38 +43,121 @@
 		-webkit-overflow-scrolling: touch;
 		font-family: "Lucida Console", Monaco, monospace
 	}
+	img {
+	  max-width: 100%;
+	  max-height: 100%;
+	  object-fit: contain;
+	}
 	</style>
 
-	<div class="container">
+	<div class="container" id="cont">
 		<div class="button-container">
-			<button id="toggleEditBtn" onclick="toggleEditable()">Enable Edit</button>
-			<button id="applyEditBtn" onclick="applyEdit()">Apply Edit</button>
+			<button id="prev" onclick="prevFile()">Prev</button>
+			<button id="toggleEditBtn" onclick="toggleEditable()">Enable</button>
+			<button id="applyEditBtn" onclick="applyEdit()">Apply</button>
+			<button id="next" onclick="nextFile()">Next</button>
 		</div>
 		<!-- textContent (with surrounding underscores) will be replaced -->
-		<textarea id="taEditor" readonly>__textContent__</textarea>
+
 	</div>
 
 	<script>
-		var __edited__ = false;
-		function toggleEditable() {
-			const textarea =
-				document.getElementById('taEditor');
-			const button =
-				document.getElementById('toggleEditBtn');
+		const iV = document.getElementById('taImage');
 
-			textarea.readOnly = !textarea.readOnly;
+		const editBtn = document.getElementById('toggleEditBtn');
+		const applyBtn = document.getElementById('applyEditBtn');
+		const prevBtn = document.getElementById('prev');
+		const nextBtn = document.getElementById('next');
+
+		const cont = document.getElementById('cont');
+
+		var c_url = "";
+		var ta = null;
+		var __edited__ = false;
+		var __textValue__ = null;
+		
+		// the url can be without suffix
+		function ODH_LoadFile(url) {
+			if (ta)
+				ta.remove();
+			if (url.endsWith(".txt")) {
+				c_url = url;
+				fetch(url)
+					.then(response => response.text())
+					.then(text => { // try text first
+						ta = document.createElement('textarea');
+						ta.id = "taEditor";
+						ta.readOnly = true;
+						ta.value = text;
+						viewer.appendChild(ta);
+
+						cont.appendChild(ta);
+					})
+			} else if (url.endsWith(".png")) {
+				ta = document.createElement('img');
+				ta.id = "taImage";
+				ta.src = url;
+				c_url = url;
+
+				cont.appendChild(ta);
+			} else { // try both suffix
+				u1 = url + ".txt";
+				u2 = url + ".png";
+
+				fetch(u1)
+					.then(response => response.text())
+					.then(text => { // try text first
+						ta = document.createElement('textarea');
+						ta.id = "taEditor";
+						ta.readOnly = true;
+						ta.value = text;
+						viewer.appendChild(ta);
+						c_url = u1;
+
+						cont.appendChild(ta);
+					})
+					.catch(err => { // assume image when text failed
+						ta = document.createElement('img');
+						ta.id = "taImage";
+						ta.src = u2;
+						c_url = u2;
+
+						cont.appendChild(ta);
+					})
+			}
+			return 1;
+		}
+
+		function toggleEditable() {
+			if (ta.id != "taEditor")
+				return;
+			ta.readOnly = !ta.readOnly;
 			if (textarea.readOnly) {
-				button.textContent = "Enable Edit";
+				editBtn.textContent = "Enable Edit";
 			} else {
-				button.textContent = "Disable Edit";
+				editBtn.textContent = "Disable Edit";
 			}
 		}
 
 		function applyEdit() {
 			__edited__ = true;
-			const button =
-				document.getElementById('applyEditBtn');
-			button.textContent = "Applied"
+			__textvalue__ = document.getElementById("taEditor").value;
+
+			applyBtn.textContent = "Applied"
+		}
+
+		function prevFile() {
+			let lastDotIndex = c_url.lastIndexOf('.');
+			pageNum = parseInt(c_url.substring(lastDotIndex-1, lastDotIndex)) - 1;
+			nUrl = c_url.substring(0, lastDotIndex-1) + (pageNum).toString();
+			ODH_LoadFile(nUrl);
+		}
+
+		function nextFile() {
+			let lastDotIndex = c_url.lastIndexOf('.');
+			pageNum = parseInt(c_url.substring(lastDotIndex-1, lastDotIndex)) + 1;
+			nUrl = c_url.substring(0, lastDotIndex-1) + (pageNum).toString();
+			ODH_LoadFile(nUrl);
 		}
 	</script>
 </body>
