@@ -78,17 +78,20 @@ function get_annotation_path (fileIndex, pageNum) {
 }
 
 // ---
-// initialise the HTML
-let novelDisplayHTML = "";
-// modify the file to override the display HTML
 // the display HTML must have a function ODH_LoadFile(url)
 // and a __textValue__ and __edited__ to enable editing
 let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
 
-htmlIndex = file_name_search (overrideDisplayHTMLPath);
+let htmlIndex = file_name_search (overrideDisplayHTMLPath);
+let htmlPath = "";
 if (htmlIndex != -1) { 
 	let finalVersion = files[htmlIndex].pages;
-	novelDisplayHTML = fm.readString (get_path (htmlIndex, finalVersion));
+	htmlVal = fm.readString (get_path (htmlIndex, finalVersion));
+
+	if (htmlVal.indexOf ("ODH_LoadFile") >= 0) { // compatible
+		htmlPath = fm.joinPath (dirPath, "/" + overrideDisplayHTMLPath + ".html");
+		fm.writeString (htmlPath, htmlVal);
+	}
 }
 
 // ---
@@ -187,17 +190,10 @@ async function display_page (fileIndex, pageNum) {
 	if (get_file_suffix (pagePath) == "txt" ||
 	    get_file_suffix (pagePath) == "png") { // use html display
 		let editView = new WebView ();
-		editView.loadHTML (novelDisplayHTML);
+		editView.loadFile (htmlPath);
 
-		let loadScript = "ODH_LoadFile(" + pagePath + ")";
-		let evalResult = await editView.evaluateJavaScript (loadScript);
-		log (loadScript);
-
-		if (evalResult != 1) { // evaluation failed, fall back to ql
-			let ql = QuickLook;
-			ql.present (pagePath, true);
-			return;
-		}
+		let loadScript = "ODH_LoadFile(\'" + pagePath + "\')";
+		editView.evaluateJavaScript (loadScript);
 
 		await editView.present ();
 
@@ -396,7 +392,8 @@ function update_page_table (fileIndex) {
 		let infoCell = row.addText ("Page: " + i.toString (), preview);
 		infoCell.widthWeight = 80;
 	
-		// For images, add an annotation button
+		// For images, add an annotation button TODO
+		/*
 		if (get_file_suffix (filePath) == "png") {
 			let anBtn = row.addButton ("📎"); // paper clip
 			anBtn.widthWeight = 10;
@@ -405,6 +402,7 @@ function update_page_table (fileIndex) {
 				get_or_create_annotation (fileIndex, i);
 			}
 		}
+		*/
 
 		let upBtn = row.addButton ("🔼"); // up arrow
 		upBtn.widthWeight = 10;
