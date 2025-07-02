@@ -76,23 +76,23 @@
 		var __edited__ = false;
 		var __textValue__ = null;
 		
+		var ODH_fm = FileManager.local ();
 		// the url can be without suffix
 		function ODH_LoadFile(url) {
 			if (ta)
 				ta.remove();
+
 			if (url.endsWith(".txt")) {
 				c_url = url;
-				fetch(url)
-					.then(response => response.text())
-					.then(text => { // try text first
-						ta = document.createElement('textarea');
-						ta.id = "taEditor";
-						ta.readOnly = true;
-						ta.value = text;
-						viewer.appendChild(ta);
 
-						cont.appendChild(ta);
-					})
+				ta = document.createElement('textarea');
+				ta.id = "taEditor";
+				ta.readOnly = true;
+				ta.value = text;
+				viewer.appendChild(ta);
+
+				cont.appendChild(ta);
+
 			} else if (url.endsWith(".png")) {
 				ta = document.createElement('img');
 				ta.id = "taImage";
@@ -100,6 +100,7 @@
 				c_url = url;
 
 				cont.appendChild(ta);
+
 			} else { // try both suffix
 				u1 = url + ".txt";
 				u2 = url + ".png";
