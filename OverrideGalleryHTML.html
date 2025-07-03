@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!-- Paste this file using ClipBoard Noveller
+	as the last page of __OverrideDisplayHTML__ -->
+<html>
+	<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+<body>
+	<!-- An iPhone 13 mini screen is about 30*60em -->
+	<style>
+	body {
+		background-color: #000000;
+	}
+	.container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	.button-container {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 0.3em;
+		gap: 0.3em;
+	}
+	button {
+		padding: 0.3em 0em;
+		background-color: #000;
+		color: #fff;
+		margin-buttom: 0em;
+		font-size: 1em;
+		text-align: center;
+		width: 6em;
+		font-family: "Lucida Console", Monaco, monospace
+	}
+	textarea {
+		width: 32em;
+		height: 55em;
+		border: 1px solid #cccccc;
+		background-color: #000;
+		color: #fff;
+		padding: 5px;
+		overflow: auto;
+		-webkit-overflow-scrolling: touch;
+		font-family: "Lucida Console", Monaco, monospace
+	}
+	img {
+	  max-width: 100%;
+	  max-height: 100%;
+	  object-fit: contain;
+	}
+	</style>
+
+	<div class="container" id="cont">
+		<div class="button-container">
+			<button id="prev" onclick="prevFile()">Prev</button>
+			<button id="next" onclick="nextFile()">Next</button>
+		</div>
+	</div>
+
+	<script>
+		const prevBtn = document.getElementById('prev');
+		const nextBtn = document.getElementById('next');
+
+		const cont = document.getElementById('cont');
+
+		var c_url = "";
+		var ta = null;
+		var __edited__ = false;
+		var __textValue__ = null;
+		
+		// the url can be without suffix
+		function ODH_LoadFile(url) {
+			if (ta)
+				ta.remove();
+
+			if (url.endsWith(".txt") || url.endsWith(".png")) {
+				ta = document.createElement('img');
+				ta.id = "taImage";
+				ta.src = url;
+				c_url = url;
+
+				cont.appendChild(ta);
+			} else {
+				try {
+					turl = url + ".txt";
+					ta = document.createElement('img');
+					ta.id = "taImage";
+					ta.src = turl;
+					c_url = turl;
+
+					cont.appendChild(ta);
+				} catch(err) {
+					turl = url + ".png";
+					ta = document.createElement('img');
+					ta.id = "taImage";
+					ta.src = turl;
+					c_url = turl;
+
+					cont.appendChild(ta);
+				}
+			}
+			log(c_url);
+
+			return 1;
+		}
+
+		function prevFile() {
+			let lastDotIndex = c_url.lastIndexOf('.');
+			pageNum = parseInt(c_url.substring(lastDotIndex-1, lastDotIndex)) - 1;
+			if (pageNum < 1)
+				return;
+			nUrl = c_url.substring(0, lastDotIndex-1) + (pageNum).toString();
+			ODH_LoadFile(nUrl);
+		}
+
+		function nextFile() {
+			let lastDotIndex = c_url.lastIndexOf('.');
+			pageNum = parseInt(c_url.substring(lastDotIndex-1, lastDotIndex)) + 1;
+			nUrl = c_url.substring(0, lastDotIndex-1) + (pageNum).toString();
+			ODH_LoadFile(nUrl);
+		}
+	</script>
+</body>
+</html>

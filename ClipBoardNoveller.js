@@ -9,8 +9,6 @@
 // should remain compatible.
 
 
-// TODO: make two separate HTMLs for displaying and editing
-
 // ---
 // initialise the file system
 let fm = FileManager.local ();
@@ -81,18 +79,37 @@ function get_annotation_path (fileIndex, pageNum) {
 }
 
 // ---
-// the display HTML must have a function ODH_LoadFile(url)
-// and a __textValue__ and __edited__ to enable editing
+// the display HTML a __textValue__ and __edited__ to enable editing
 let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
+let htmlDisplayIndex = file_name_search (overrideDisplayHTMLPath);
+let htmlDisplayString = ""
+if (htmlDisplayIndex != -1) { 
+	let finalVersion = files[htmlIndex].pages;
+	htmlDisplayString = fm.readString (get_path (htmlIndex, finalVersion));
+	if (htmlDisplayString.indexOf ("__textContent__") < 0) { // incompatible
+		htmlDisplayString = ""
+	}
+}
+function evaluate_display_html (textContent) {
+	encodedText = textContent.replace (/&/g, '&amp;')
+	                         .replace (/</g, '&lt;')
+	                         .replace (/>/g, '&gt;')
+	                         .replace (/"/g, '&quot;')
+	                         .replace (/'/g, '&#039;');
+	htmlDoc = htmlDisplayString.replace ("__textContent__", encodedText);
+	return htmlDoc;
+}
 
-let htmlIndex = file_name_search (overrideDisplayHTMLPath);
-let htmlPath = "";
-if (htmlIndex != -1) { 
+// the gallery HTML must have an ODH_LoadFile function
+let overrideGalleryHTMLPath = "__OverrideGalleryHTML__";
+let htmlGalleryIndex = file_name_search (overrideGalleryHTMLPath);
+let htmlGalleryPath = "";
+if (htmlGalleryIndex != -1) { 
 	let finalVersion = files[htmlIndex].pages;
 	htmlVal = fm.readString (get_path (htmlIndex, finalVersion));
-
 	if (htmlVal.indexOf ("ODH_LoadFile") >= 0) { // compatible
-		htmlPath = fm.joinPath (dirPath, "/" + overrideDisplayHTMLPath + ".html");
+		htmlGalleryPath =
+			fm.joinPath (dirPath, "/" + overrideGalleryHTMLPath + ".html");
 		fm.writeString (htmlPath, htmlVal);
 	}
 }
@@ -187,11 +204,10 @@ async function edit_page (fileIndex, pageNum, newContent) {
 	pageTable.reload ();
 }
 
-async function display_page (fileIndex, pageNum) {
+async function gallery_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
 
-	if (get_file_suffix (pagePath) == "txt" ||
-	    get_file_suffix (pagePath) == "png") { // use html display
+	if (htmlGalleryPath != "")
 		let editView = new WebView ();
 		editView.loadFile (htmlPath);
 
@@ -205,6 +221,34 @@ async function display_page (fileIndex, pageNum) {
 			result = "__NaN__";
 			if (__edited__)
 				result = __textValue__;
+			result
+			`
+		);
+
+		if (resultString != "__NaN__") {
+			edit_page (fileIndex, pageNum, resultString);
+		}
+	} else {
+		let ql = QuickLook;
+		ql.present (pagePath, true);
+	}
+}
+
+async function display_page (fileIndex, pageNum) {
+	let pagePath = get_path (fileIndex, pageNum);
+
+	if (get_file_suffix (pagePath) == "txt" && htmlDisplayString != "") { // use html display
+		textContent = fm.readString (pagePath);
+		let editView = new WebView ();
+		editView.loadHTML (evaluate_display_html (textContent));
+
+		await editView.present ();
+
+		let resultString = await editView.evaluateJavaScript (
+			`
+			result = "__NaN__";
+			if (__edited__)
+				result = document.getElementById("taEditor").value;
 			result
 			`
 		);
@@ -374,13 +418,15 @@ function update_page_table (fileIndex) {
 					continue;
 				}
 			}
+		} else {
+			files[fileIndex]["hiddenPages"] = [];
 		}
 
 		let row = new UITableRow ();
 		row.dismissOnSelect = false;
 		row.height = 60;
 		row.onSelect = (idx) => { 
-			display_page (fileIndex, i);
+			gallery_page (fileIndex, i);
 		}
 
 		let filePath = get_path (fileIndex, i);
@@ -391,7 +437,7 @@ function update_page_table (fileIndex) {
 			preview = "Image: No Preview";
 		}
 		preview = preview.replaceAll (/\s/g, ' ');
-		preview = preview.slice (0, 75);
+		preview = preview.slice (0, 50);
 		let infoCell = row.addText ("Page: " + i.toString (), preview);
 		infoCell.widthWeight = 80;
 	
@@ -406,6 +452,16 @@ function update_page_table (fileIndex) {
 			}
 		}
 		*/
+
+		// we can edit texts; for legacy reasons it's called display
+		if (get_file_suffix (filePath) == "txt") {
+			let editBtn = row.addButton ("🖊️"); // pen
+			editBtn.widthWeight = 10;
+			editBtn.leftAligned ();
+			editBtn.onTap = () => {
+				display_page (fileIndex, i);
+			}
+		}
 
 		let upBtn = row.addButton ("🔼"); // up arrow
 		upBtn.widthWeight = 10;
