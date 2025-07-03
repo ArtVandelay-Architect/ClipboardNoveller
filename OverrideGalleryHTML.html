@@ -29,7 +29,7 @@
 		margin-buttom: 0em;
 		font-size: 1em;
 		text-align: center;
-		width: 6em;
+		width: 8em;
 		font-family: "Lucida Console", Monaco, monospace
 	}
 	textarea {
@@ -73,32 +73,14 @@
 			if (ta)
 				ta.remove();
 
-			if (url.endsWith(".txt") || url.endsWith(".png")) {
-				ta = document.createElement('img');
-				ta.id = "taImage";
-				ta.src = url;
-				c_url = url;
-
-				cont.appendChild(ta);
-			} else {
-				try {
-					turl = url + ".txt";
-					ta = document.createElement('img');
-					ta.id = "taImage";
-					ta.src = turl;
-					c_url = turl;
-
-					cont.appendChild(ta);
-				} catch(err) {
-					turl = url + ".png";
-					ta = document.createElement('img');
-					ta.id = "taImage";
-					ta.src = turl;
-					c_url = turl;
-
-					cont.appendChild(ta);
-				}
+			if (!url.endsWith(".png")) {
+				url = url + ".png";
 			}
+			ta = document.createElement('img');
+			ta.id = "taImage";
+			ta.src = url;
+			c_url = url;
+
 			log(c_url);
 
 			return 1;

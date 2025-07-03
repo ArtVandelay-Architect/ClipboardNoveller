@@ -84,8 +84,8 @@ let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
 let htmlDisplayIndex = file_name_search (overrideDisplayHTMLPath);
 let htmlDisplayString = ""
 if (htmlDisplayIndex != -1) { 
-	let finalVersion = files[htmlIndex].pages;
-	htmlDisplayString = fm.readString (get_path (htmlIndex, finalVersion));
+	let finalVersion = files[htmlDisplayIndex].pages;
+	htmlDisplayString = fm.readString (get_path (htmlDisplayIndex, finalVersion));
 	if (htmlDisplayString.indexOf ("__textContent__") < 0) { // incompatible
 		htmlDisplayString = ""
 	}
@@ -105,12 +105,12 @@ let overrideGalleryHTMLPath = "__OverrideGalleryHTML__";
 let htmlGalleryIndex = file_name_search (overrideGalleryHTMLPath);
 let htmlGalleryPath = "";
 if (htmlGalleryIndex != -1) { 
-	let finalVersion = files[htmlIndex].pages;
-	htmlVal = fm.readString (get_path (htmlIndex, finalVersion));
+	let finalVersion = files[htmlGalleryIndex].pages;
+	htmlVal = fm.readString (get_path (htmlGalleryIndex, finalVersion));
 	if (htmlVal.indexOf ("ODH_LoadFile") >= 0) { // compatible
 		htmlGalleryPath =
 			fm.joinPath (dirPath, "/" + overrideGalleryHTMLPath + ".html");
-		fm.writeString (htmlPath, htmlVal);
+		fm.writeString (htmlGalleryPath, htmlVal);
 	}
 }
 
@@ -209,7 +209,7 @@ async function gallery_page (fileIndex, pageNum) {
 
 	if (htmlGalleryPath != "")
 		let editView = new WebView ();
-		editView.loadFile (htmlPath);
+		editView.loadFile (htmlGalleryPath);
 
 		let loadScript = "ODH_LoadFile(\'" + pagePath + "\')";
 		editView.evaluateJavaScript (loadScript);
