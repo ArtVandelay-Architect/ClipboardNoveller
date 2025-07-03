@@ -207,26 +207,14 @@ async function edit_page (fileIndex, pageNum, newContent) {
 async function gallery_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
 
-	if (htmlGalleryPath != "")
-		let editView = new WebView ();
-		editView.loadFile (htmlGalleryPath);
+	if (htmlGalleryPath != "") {
+		let galView = new WebView ();
+		await galView.loadFile (htmlGalleryPath);
 
 		let loadScript = "ODH_LoadFile(\'" + pagePath + "\')";
-		editView.evaluateJavaScript (loadScript);
+		await galView.evaluateJavaScript (loadScript);
 
-		await editView.present ();
-
-		let resultString = await editView.evaluateJavaScript (
-			`
-			result = "__NaN__";
-			if (__edited__)
-				result = __textValue__;
-			result
-			`
-		);
-
-		if (resultString != "__NaN__") {
-			edit_page (fileIndex, pageNum, resultString);
+		await galView.present ();
 		}
 	} else {
 		let ql = QuickLook;
@@ -240,7 +228,7 @@ async function display_page (fileIndex, pageNum) {
 	if (get_file_suffix (pagePath) == "txt" && htmlDisplayString != "") { // use html display
 		textContent = fm.readString (pagePath);
 		let editView = new WebView ();
-		editView.loadHTML (evaluate_display_html (textContent));
+		await editView.loadHTML (evaluate_display_html (textContent));
 
 		await editView.present ();
 
