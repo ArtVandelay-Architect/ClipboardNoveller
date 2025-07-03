@@ -204,24 +204,6 @@ async function edit_page (fileIndex, pageNum, newContent) {
 	pageTable.reload ();
 }
 
-async function gallery_page (fileIndex, pageNum) {
-	let pagePath = get_path (fileIndex, pageNum);
-
-	if (htmlGalleryPath != "") {
-		let galView = new WebView ();
-		await galView.loadFile (htmlGalleryPath);
-
-		let loadScript = "ODH_LoadFile(\'" + pagePath + "\')";
-		await galView.evaluateJavaScript (loadScript);
-
-		await galView.present ();
-		}
-	} else {
-		let ql = QuickLook;
-		ql.present (pagePath, true);
-	}
-}
-
 async function display_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
 
@@ -244,6 +226,23 @@ async function display_page (fileIndex, pageNum) {
 		if (resultString != "__NaN__") {
 			edit_page (fileIndex, pageNum, resultString);
 		}
+	} else {
+		let ql = QuickLook;
+		ql.present (pagePath, true);
+	}
+}
+
+async function gallery_page (fileIndex, pageNum) {
+	let pagePath = get_path (fileIndex, pageNum);
+
+	if (htmlGalleryPath != "" && get_file_suffix (pagePath) == "png") {
+		let galView = new WebView ();
+		await galView.loadFile (htmlGalleryPath);
+
+		let loadScript = "ODH_LoadFile(\'" + pagePath + "\')";
+		await galView.evaluateJavaScript (loadScript);
+
+		await galView.present ();
 	} else {
 		let ql = QuickLook;
 		ql.present (pagePath, true);
