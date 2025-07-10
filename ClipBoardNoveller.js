@@ -1,5 +1,5 @@
 // ClipBoardNoveller for Scriptable by Luke Li
-// v1.0.18
+// v1.0.19
 
 // This program allows you to save novels you copied from your clipboard in pages,
 // each page is a different text file, and the json file contains the list of main
@@ -8,15 +8,25 @@
 // This is a largely re-written version of the previous script, but any file created
 // should remain compatible.
 
+let debugMode = true;
+function dlog (...args)
+	if (debugMode) {
+		const result = args.join(' ');
+		log(result);
+	}
+}
+
+// Usage
+printAll("Hello", "world!", 123, true, { key: "value" });
 
 // ---
 // initialise the file system
 let fm = FileManager.local ();
 let dirPath = fm.joinPath (fm.documentsDirectory (),"lktextreader");
 // json file containing the list of file names
-// loads into an array of objects with attributes `filename`, `pages` 
+// loads into an array of objects with attributes `filename`, `pages`
 // and optionally `hiddenPages[]`, `annotation`
-let lofPath = fm.joinPath (dirPath,"/lof.json");  
+let lofPath = fm.joinPath (dirPath,"/lof.json");
 
 // If the path does not exist, create one.
 if (!fm.fileExists (dirPath)){
@@ -35,7 +45,7 @@ function save_files () {
 	fm.writeString (lofPath,JSON.stringify (files));
 }
 // used to sort file by name
-function file_compare (a, b) { 
+function file_compare (a, b) {
 	return a.filename > b.filename
 }
 // search wrapper, -1 for not found
@@ -83,7 +93,7 @@ function get_annotation_path (fileIndex, pageNum) {
 let overrideDisplayHTMLPath = "__OverrideDisplayHTML__";
 let htmlDisplayIndex = file_name_search (overrideDisplayHTMLPath);
 let htmlDisplayString = ""
-if (htmlDisplayIndex != -1) { 
+if (htmlDisplayIndex != -1) {
 	let finalVersion = files[htmlDisplayIndex].pages;
 	htmlDisplayString = fm.readString (get_path (htmlDisplayIndex, finalVersion));
 	if (htmlDisplayString.indexOf ("__textContent__") < 0) { // incompatible
@@ -100,14 +110,14 @@ function evaluate_display_html (textContent) {
 	return htmlDoc;
 }
 
-// the gallery HTML must have an ODH_LoadFile function
+// the gallery HTML must have an ODH_LoadFiles function
 let overrideGalleryHTMLPath = "__OverrideGalleryHTML__";
 let htmlGalleryIndex = file_name_search (overrideGalleryHTMLPath);
 let htmlGalleryPath = "";
-if (htmlGalleryIndex != -1) { 
+if (htmlGalleryIndex != -1) {
 	let finalVersion = files[htmlGalleryIndex].pages;
 	htmlVal = fm.readString (get_path (htmlGalleryIndex, finalVersion));
-	if (htmlVal.indexOf ("ODH_LoadFile") >= 0) { // compatible
+	if (htmlVal.indexOf ("ODH_LoadFiles") >= 0) { // compatible
 		htmlGalleryPath =
 			fm.joinPath (dirPath, "/" + overrideGalleryHTMLPath + ".html");
 		fm.writeString (htmlGalleryPath, htmlVal);
@@ -239,7 +249,20 @@ async function gallery_page (fileIndex, pageNum) {
 		let galView = new WebView ();
 		await galView.loadFile (htmlGalleryPath);
 
-		let loadScript = "ODH_LoadFile(\'" + pagePath + "\')";
+		// construct an array of all the filenames
+		// that should be in the gallery
+		urls = "[";
+		for (let i = 1; i <= files[fileIndex].pages; i++) {
+			let p = files[fileIndex].hiddenPages.indexOf (pageNum);
+			if (p != -1)
+				continue;
+			urls = urls + get_path (fileIndex, i) + ", ";
+		}
+		urls = urls.slice(0, -2) + "]";
+
+		dlog(urls);
+
+		let loadScript = "ODH_LoadFiles(\'" + urls + "\')";
 		await galView.evaluateJavaScript (loadScript);
 
 		await galView.present ();
@@ -412,7 +435,7 @@ function update_page_table (fileIndex) {
 		let row = new UITableRow ();
 		row.dismissOnSelect = false;
 		row.height = 60;
-		row.onSelect = (idx) => { 
+		row.onSelect = (idx) => {
 			gallery_page (fileIndex, i);
 		}
 
@@ -540,7 +563,7 @@ function update_main_table () {
 		presentation.then (
 			function () {
 				create_file (a.textFieldValue (0));
-			}, 
+			},
 			function () {}
 		); 		
 	}
@@ -574,7 +597,7 @@ function update_main_table () {
 				function () {
 					unlink_file (i, a.textFieldValue (0));
 				},
-				function () {} 
+				function () {}
 			);
 		}
 
