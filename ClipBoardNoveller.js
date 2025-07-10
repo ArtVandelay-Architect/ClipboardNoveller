@@ -9,15 +9,12 @@
 // should remain compatible.
 
 let debugMode = true;
-function dlog (...args)
+function dlog (...args) {
 	if (debugMode) {
 		const result = args.join(' ');
 		log(result);
 	}
 }
-
-// Usage
-printAll("Hello", "world!", 123, true, { key: "value" });
 
 // ---
 // initialise the file system
@@ -245,7 +242,7 @@ async function display_page (fileIndex, pageNum) {
 async function gallery_page (fileIndex, pageNum) {
 	let pagePath = get_path (fileIndex, pageNum);
 
-	if (htmlGalleryPath != "" && get_file_suffix (pagePath) == "png") {
+	if (htmlGalleryPath != "") {
 		let galView = new WebView ();
 		await galView.loadFile (htmlGalleryPath);
 
@@ -256,13 +253,13 @@ async function gallery_page (fileIndex, pageNum) {
 			let p = files[fileIndex].hiddenPages.indexOf (pageNum);
 			if (p != -1)
 				continue;
-			urls = urls + get_path (fileIndex, i) + ", ";
+			urls = urls + "`" + get_path (fileIndex, i) + "`" + ", ";
 		}
 		urls = urls.slice(0, -2) + "]";
 
 		dlog(urls);
 
-		let loadScript = "ODH_LoadFiles(\'" + urls + "\')";
+		let loadScript = "ODH_LoadFiles(" + urls + ")";
 		await galView.evaluateJavaScript (loadScript);
 
 		await galView.present ();
