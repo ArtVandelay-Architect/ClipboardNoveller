@@ -250,7 +250,7 @@ async function gallery_page (fileIndex, pageNum) {
 		// that should be in the gallery
 		urls = "[";
 		for (let i = 1; i <= files[fileIndex].pages; i++) {
-			let p = files[fileIndex].hiddenPages.indexOf (pageNum);
+			let p = files[fileIndex].hiddenPages.indexOf (i);
 			if (p != -1)
 				continue;
 			urls = urls + "`" + get_path (fileIndex, i) + "`" + ", ";
