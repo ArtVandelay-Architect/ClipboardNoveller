@@ -3,11 +3,16 @@ A JS script designed for the Scriptable API as a light novel reader
 
 ## Unified reader
 
-Import `ClipboardNovellerReader.js` as a new script in Scriptable. Save
-`Reader.html` in the root of Scriptable's Documents folder, either under
-**On My iPhone → Scriptable** or **iCloud Drive → Scriptable** in Files.
-The script checks local Documents first, then iCloud (downloading the HTML if needed).
-Keep the filename exactly `Reader.html`; no HTML override book is needed.
+Import `ClipboardNovellerReader.js` as a new script in Scriptable. In its library,
+create a special book named exactly `__ReaderHTML__`. Copy the **full HTML source**
+of `Reader.html` to the clipboard, open that book, and use the add-page button
+(📃) to paste it as a text chapter.
+
+The **last chapter** of `__ReaderHTML__` supplies the reader HTML, following the
+old display/gallery override pattern. To update the reader, paste the updated
+HTML as a new last chapter. It takes effect the next time you open the reader;
+even a hidden last chapter is used. A standalone `Reader.html` in Files is no
+longer loaded. Quick Look remains available before the reader HTML is installed.
 
 The new script uses the same local `lktextreader` folder and `lof.json` as the
 original, so existing books remain available. The original script and override

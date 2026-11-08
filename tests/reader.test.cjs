@@ -8,6 +8,33 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'Reader.html'), 'utf8');
 const script = fs.readFileSync(path.join(root, 'ClipboardNovellerReader.js'), 'utf8');
 
+test('HTML loader uses the special book’s latest text chapter and reloads updates', async () => {
+  const books = [{ filename: 'Normal book', pages: 1 }, { filename: '__ReaderHTML__', pages: 2, hiddenPages: [2] }];
+  const disk = new Map([['/1-1.txt', 'Old HTML'], ['/1-2.txt', html]]);
+  const context = vm.createContext({
+    files: books,
+    file_name_search: name => books.findIndex(book => book.filename === name),
+    get_path: (index, number) => '/'+ index + '-' + number + '.txt',
+    fm: { fileExists: file => disk.has(file), readString: file => disk.get(file) }
+  });
+  vm.runInContext(script.slice(script.indexOf('async function load_reader_html()'), script.indexOf('// ---\n// initialise the UI')), context);
+  assert.equal(await context.load_reader_html(), html);
+  books[1].pages = 3;
+  disk.set('/1-3.txt', html + '\n<!-- New version -->');
+  assert.equal(await context.load_reader_html(), disk.get('/1-3.txt'));
+  disk.set('/1-3.txt', '   ');
+  await assert.rejects(context.load_reader_html(), /empty/);
+  disk.delete('/1-3.txt');
+  await assert.rejects(context.load_reader_html(), /must be a text page/);
+  context.get_path = () => '/1-3.png';
+  disk.set('/1-3.png', 'PNG');
+  await assert.rejects(context.load_reader_html(), /must be a text page/);
+  books[1].pages = 0;
+  await assert.rejects(context.load_reader_html(), /Create a book named __ReaderHTML__/);
+  books.pop();
+  await assert.rejects(context.load_reader_html(), /Create a book named __ReaderHTML__/);
+});
+
 function reader() {
   const elements = new Map();
   for (const [, id] of html.matchAll(/id="([^"]+)"/g)) {

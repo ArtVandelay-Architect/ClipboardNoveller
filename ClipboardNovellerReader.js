@@ -1,6 +1,6 @@
 // ClipBoardNoveller for Scriptable by Luke Li
 // Reader edition v2.0
-// Install Reader.html alongside this script in Scriptable Documents.
+// Paste Reader.html as the last text page of the special book __ReaderHTML__.
 // Uses the existing local lktextreader library.
 
 // This program allows you to save novels you copied from your clipboard in pages,
@@ -87,16 +87,20 @@ function get_annotation_path (fileIndex, pageNum) {
 	return path + "_annotation.txt";
 }
 
-// Reader.html can be installed in either local or iCloud Scriptable Documents.
-// Library data remains in the same local folder used by the original script.
+// Follow the original override-book pattern: the last page is the active HTML.
+// Resolve on every open so newly pasted versions take effect without restarting.
 async function load_reader_html() {
-    for (const manager of [fm, FileManager.iCloud()]) {
-        const path = manager.joinPath(manager.documentsDirectory(), "Reader.html");
-        if (!manager.fileExists(path)) continue;
-        if (manager.isFileStoredIniCloud(path)) await manager.downloadFileFromiCloud(path);
-        return manager.readString(path);
+    const index = file_name_search("__ReaderHTML__");
+    if (index === -1 || !Number.isInteger(files[index].pages) || files[index].pages < 1) {
+        throw new Error("Create a book named __ReaderHTML__ and paste the full contents of Reader.html as a text page. The last page supplies the reader HTML.");
     }
-    throw new Error("Install Reader.html in Scriptable Documents (local or iCloud) before opening the reader.");
+    const path = get_path(index, files[index].pages);
+    if (!path || !path.endsWith(".txt") || !fm.fileExists(path)) {
+        throw new Error("The last page of __ReaderHTML__ must be a text page containing the full contents of Reader.html.");
+    }
+    const html = fm.readString(path);
+    if (!html.trim()) throw new Error("The last page of __ReaderHTML__ is empty. Paste the full contents of Reader.html as a new page.");
+    return html;
 }
 
 // ---
