@@ -24,6 +24,8 @@ discarding unsaved edits, and closing the reader normally offers Save or Discard
 for an unfinished edit. Force-quitting Scriptable cannot run that prompt, so use
 Save before leaving an edit. Theme (System/Light/Dark) and font size controls
 apply during the current reader session; image colors are preserved.
+The reader header reserves a row above its controls for Scriptable's floating
+Close and Share buttons, in addition to the device's top safe area.
 
 The reader loads one page at a time and passes data through Scriptable's WebView
 JavaScript callback bridge. Text is assigned with `textContent`/`value`; PNGs use

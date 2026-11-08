@@ -14,7 +14,16 @@
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     body { margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, sans-serif; }
-    header { position: sticky; top: 0; z-index: 1; background: var(--paper); padding: .6rem max(.75rem, env(safe-area-inset-left)); border-bottom: 1px solid var(--panel); }
+    /* Scriptable's fullscreen Close/Share controls float over the web content.
+       Keep their row clear even when the header sticks during scrolling.
+       The safe-area inset alone only accounts for the device's screen cutout. */
+    header {
+      position: sticky; top: 0; z-index: 1; background: var(--paper);
+      padding: calc(env(safe-area-inset-top, 0px) + 60px + .6rem)
+        max(.75rem, env(safe-area-inset-right, 0px)) .6rem
+        max(.75rem, env(safe-area-inset-left, 0px));
+      border-bottom: 1px solid var(--panel);
+    }
     h1 { font-size: 1rem; margin: 0 0 .5rem; overflow-wrap: anywhere; }
     nav, .settings { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
     .settings { margin-top: .5rem; }
