@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Novel reader</title>
+  <style>
+    :root { color-scheme: light dark; --paper: #faf8f3; --ink: #242424; --panel: #eeeae2; }
+    @media (prefers-color-scheme: dark) {
+      :root { --paper: #17191c; --ink: #e2e4e8; --panel: #282b30; }
+    }
+    :root[data-theme="light"] { color-scheme: light; --paper: #faf8f3; --ink: #242424; --panel: #eeeae2; }
+    :root[data-theme="dark"] { color-scheme: dark; --paper: #17191c; --ink: #e2e4e8; --panel: #282b30; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: system-ui, sans-serif; }
+    header { position: sticky; top: 0; z-index: 1; background: var(--paper); padding: .6rem max(.75rem, env(safe-area-inset-left)); border-bottom: 1px solid var(--panel); }
+    h1 { font-size: 1rem; margin: 0 0 .5rem; overflow-wrap: anywhere; }
+    nav, .settings { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+    .settings { margin-top: .5rem; }
+    button, select { font: inherit; color: inherit; background: var(--panel); border: 1px solid transparent; border-radius: .5rem; min-height: 44px; padding: .5rem .7rem; }
+    button:disabled { opacity: .4; }
+    button:focus-visible, select:focus-visible { outline: 2px solid #698bef; }
+    #chapter { flex: 1; min-width: 0; }
+    main { max-width: 44rem; margin: auto; padding: 1.25rem max(1rem, env(safe-area-inset-left)) max(3rem, env(safe-area-inset-bottom)); }
+    article, textarea { font: var(--size, 20px)/1.75 Georgia, serif; overflow-wrap: anywhere; }
+    article { white-space: pre-wrap; }
+    textarea { display: block; width: 100%; min-height: 65vh; resize: vertical; background: var(--paper); color: var(--ink); padding: .75rem; border: 1px solid var(--ink); border-radius: .4rem; }
+    img { display: block; max-width: 100%; height: auto; margin: auto; }
+    #status { margin: .5rem 0 0; font-size: .85rem; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Novel reader</h1>
+    <nav aria-label="Chapter navigation">
+      <button id="previous" disabled>Previous</button>
+      <select id="chapter" aria-label="Chapter" disabled></select>
+      <button id="next" disabled>Next</button>
+    </nav>
+    <div class="settings">
+      <button id="edit" disabled>Edit</button>
+      <button id="save" hidden>Save</button>
+      <button id="cancel" hidden>Cancel edit</button>
+      <label>Theme <select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+      <button id="smaller" aria-label="Smaller text">A−</button>
+      <button id="larger" aria-label="Larger text">A+</button>
+    </div>
+    <p id="status" role="status" aria-live="polite">Loading…</p>
+  </header>
+  <main>
+    <article id="text"></article>
+    <textarea id="editor" aria-label="Edit chapter" hidden></textarea>
+    <img id="picture" alt="Chapter illustration" hidden>
+  </main>
+  <script>
+    // Scriptable owns files. Only plain data crosses this queued callback bridge.
+    const byId = id => document.getElementById(id);
+    let current = null, chapters = [], editing = false, busy = false;
+    let queue = [], receiver = null, stopped = false, size = 20;
+    function send(message) {
+      if (stopped) return;
+      if (receiver) { const deliver = receiver; receiver = null; deliver(message); }
+      else queue.push(message);
+    }
+    function dirty() { return editing && byId('editor').value !== current.content; }
+    function controls() {
+      const index = current ? chapters.findIndex(c => c.number === current.number) : -1;
+      byId('previous').disabled = busy || index <= 0;
+      byId('next').disabled = busy || index < 0 || index >= chapters.length - 1;
+      byId('chapter').disabled = busy || !current;
+      byId('edit').disabled = busy || !current || current.type !== 'text';
+      byId('edit').hidden = editing;
+      byId('save').hidden = byId('cancel').hidden = !editing;
+      byId('save').disabled = byId('cancel').disabled = busy;
+      byId('editor').readOnly = busy;
+    }
+    function navigate(number) {
+      byId('chapter').value = String(current.number);
+      if (busy || number === current.number) return;
+      if (dirty() && !confirm('Discard unsaved changes and change chapter?')) return;
+      busy = true; controls();
+      byId('status').textContent = 'Loading…';
+      send({ action: 'open', number });
+    }
+    window.Reader = {
+      receive(callback) {
+        if (stopped) callback({ action: 'stop' });
+        else if (queue.length) callback(queue.shift());
+        else receiver = callback;
+      },
+      stop() {
+        stopped = true; queue = [];
+        if (receiver) { const deliver = receiver; receiver = null; deliver({ action: 'stop' }); }
+      },
+      setup(book) {
+        chapters = book.chapters;
+        byId('title').textContent = book.title;
+        byId('chapter').replaceChildren();
+        chapters.forEach(chapter => {
+          const option = document.createElement('option');
+          option.value = chapter.number; option.textContent = 'Page ' + chapter.number;
+          byId('chapter').appendChild(option);
+        });
+      },
+      show(page) {
+        current = page; editing = busy = false;
+        byId('chapter').value = String(page.number);
+        byId('text').textContent = page.type === 'text' ? page.content : '';
+        byId('editor').value = page.type === 'text' ? page.content : '';
+        byId('editor').hidden = true;
+        byId('text').hidden = page.type !== 'text';
+        byId('picture').hidden = page.type !== 'image';
+        if (page.type === 'image') byId('picture').src = page.src;
+        else byId('picture').removeAttribute('src');
+        byId('status').textContent = 'Page ' + page.number + ' · ' + chapters.length + ' available';
+        controls(); window.scrollTo(0, 0);
+      },
+      saved() {
+        current.content = byId('editor').value;
+        byId('text').textContent = current.content;
+        editing = busy = false;
+        byId('editor').hidden = true; byId('text').hidden = false;
+        byId('status').textContent = 'Saved'; controls();
+      },
+      error(message) { busy = false; byId('status').textContent = message; controls(); },
+      draft() { return dirty() ? { number: current.number, content: byId('editor').value } : null; }
+    };
+    byId('previous').onclick = () => navigate(chapters[chapters.findIndex(c => c.number === current.number) - 1].number);
+    byId('next').onclick = () => navigate(chapters[chapters.findIndex(c => c.number === current.number) + 1].number);
+    byId('chapter').onchange = event => navigate(Number(event.target.value));
+    byId('edit').onclick = () => {
+      editing = true; byId('editor').hidden = false; byId('text').hidden = true;
+      byId('status').textContent = 'Editing · tap Save to write changes'; controls();
+      byId('editor').focus();
+    };
+    byId('cancel').onclick = () => {
+      if (!dirty() || confirm('Discard unsaved changes?')) {
+        byId('editor').value = current.content;
+        editing = false; byId('editor').hidden = true; byId('text').hidden = false;
+        byId('status').textContent = 'Edit cancelled'; controls();
+      }
+    };
+    byId('save').onclick = () => {
+      busy = true; controls(); byId('status').textContent = 'Saving…';
+      send({ action: 'save', number: current.number, content: byId('editor').value });
+    };
+    byId('theme').onchange = event => { document.documentElement.dataset.theme = event.target.value; };
+    function font(delta) { size = Math.max(14, Math.min(36, size + delta)); document.documentElement.style.setProperty('--size', size + 'px'); }
+    byId('smaller').onclick = () => font(-2);
+    byId('larger').onclick = () => font(2);
+    byId('picture').onerror = () => { byId('status').textContent = 'Unable to display this image.'; };
+  </script>
+</body>
+</html>
